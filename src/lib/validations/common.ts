@@ -1,0 +1,55 @@
+import { z } from "zod";
+
+export const cuidSchema = z.string().cuid();
+export const workspaceIdSchema = cuidSchema;
+export const paginationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export const createWorkspaceSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  slug: z.string().trim().toLowerCase().min(3).max(48)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+});
+
+export const createClientSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().max(254).transform((value) => value.toLowerCase()),
+  company: z.string().trim().max(120).optional(),
+  phone: z.string().trim().max(40).optional(),
+  notes: z.string().trim().max(2000).optional(),
+});
+
+export const createProjectSchema = z.object({
+  clientId: cuidSchema,
+  name: z.string().trim().min(2).max(120),
+  description: z.string().trim().max(5000).optional(),
+  dueDate: z.coerce.date().optional(),
+});
+
+export const createTaskSchema = z.object({
+  projectId: cuidSchema,
+  milestoneId: cuidSchema.optional(),
+  assigneeId: cuidSchema.optional(),
+  title: z.string().trim().min(2).max(160),
+  description: z.string().trim().max(5000).optional(),
+  visibleToClient: z.boolean().default(false),
+  dueDate: z.coerce.date().optional(),
+});
+
+export const deliverableDecisionSchema = z.object({
+  workspaceId: cuidSchema,
+  deliverableId: cuidSchema,
+  expectedRevision: z.number().int().nonnegative(),
+  decision: z.enum(["APPROVED", "CHANGES_REQUESTED"]),
+  feedback: z.string().trim().max(4000).optional(),
+}).superRefine((value, context) => {
+  if (value.decision === "CHANGES_REQUESTED" && !value.feedback?.trim()) {
+    context.addIssue({
+      code: "custom",
+      path: ["feedback"],
+      message: "Feedback is required when requesting changes.",
+    });
+  }
+});
