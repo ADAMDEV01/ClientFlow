@@ -21,6 +21,7 @@ export async function getClientProjectPortal(
     },
     select: {
       id: true,
+      workspaceId: true,
       name: true,
       description: true,
       status: true,

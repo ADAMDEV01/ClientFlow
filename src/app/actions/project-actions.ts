@@ -46,3 +46,48 @@ export async function createTaskAction(
     return failure(error);
   }
 }
+
+export type ProjectFormState = { error?: string; success?: string };
+
+export async function createClientFormAction(
+  _previousState: ProjectFormState,
+  formData: FormData,
+): Promise<ProjectFormState> {
+  const workspaceId = String(formData.get("workspaceId") ?? "");
+  const result = await createClientAction(workspaceId, {
+    name: formData.get("name"),
+    email: formData.get("email"),
+    company: formData.get("company") || undefined,
+    phone: formData.get("phone") || undefined,
+  });
+  return result.ok ? { success: "Client added." } : { error: result.error.message };
+}
+
+export async function createProjectFormAction(
+  _previousState: ProjectFormState,
+  formData: FormData,
+): Promise<ProjectFormState> {
+  const workspaceId = String(formData.get("workspaceId") ?? "");
+  const result = await createProjectAction(workspaceId, {
+    clientId: formData.get("clientId"),
+    name: formData.get("name"),
+    description: formData.get("description") || undefined,
+    dueDate: formData.get("dueDate") || undefined,
+  });
+  return result.ok ? { success: "Project created." } : { error: result.error.message };
+}
+
+export async function createTaskFormAction(
+  _previousState: ProjectFormState,
+  formData: FormData,
+): Promise<ProjectFormState> {
+  const workspaceId = String(formData.get("workspaceId") ?? "");
+  const result = await createTaskAction(workspaceId, {
+    projectId: formData.get("projectId"),
+    title: formData.get("title"),
+    description: formData.get("description") || undefined,
+    visibleToClient: formData.get("visibleToClient") === "on",
+    dueDate: formData.get("dueDate") || undefined,
+  });
+  return result.ok ? { success: "Task created." } : { error: result.error.message };
+}

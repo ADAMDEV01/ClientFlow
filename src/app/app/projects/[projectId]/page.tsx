@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getPrisma } from "@/lib/prisma";
 import { requireWorkspaceMember } from "@/server/authz";
+import { CreateTaskForm } from "@/app/components/project-forms";
 
 export default async function ProjectDetailPage({
   params,
@@ -36,7 +37,7 @@ export default async function ProjectDetailPage({
         <section><h2 className="text-lg font-semibold">Milestones</h2><div className="mt-3 space-y-2">{project.milestones.map((item) => <div key={item.id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-800"><p className="font-medium">{item.name}</p><p className="mt-1 text-xs text-slate-500">{item.completedAt ? "Completed" : item.dueDate ? `Due ${item.dueDate.toLocaleDateString()}` : "No due date"}</p></div>)}{!project.milestones.length ? <p className="text-sm text-slate-500">No milestones yet.</p> : null}</div></section>
         <section><h2 className="text-lg font-semibold">Deliverables</h2><div className="mt-3 space-y-2">{project.deliverables.map((item) => <div key={item.id} className="flex items-center justify-between rounded-xl border border-slate-200 p-4 dark:border-slate-800"><p className="font-medium">{item.name} <span className="text-xs text-slate-500">v{item.version}</span></p><span className="text-xs text-slate-500">{item.status.toLowerCase().replace("_", " ")}</span></div>)}{!project.deliverables.length ? <p className="text-sm text-slate-500">No deliverables yet.</p> : null}</div></section>
       </div>
-      <section className="mt-8"><h2 className="text-lg font-semibold">Tasks</h2><div className="mt-3 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">{project.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 last:border-0 dark:border-slate-800"><div><p className="font-medium">{task.title}</p><p className="text-xs text-slate-500">{task.assignee?.name ?? "Unassigned"} · {task.visibleToClient ? "Client visible" : "Internal only"}</p></div><span className="text-xs text-slate-500">{task.status.toLowerCase().replace("_", " ")} · {task.priority.toLowerCase()}</span></div>)}{!project.tasks.length ? <p className="p-4 text-sm text-slate-500">No tasks yet.</p> : null}</div></section>
+      <section className="mt-8 grid gap-6 lg:grid-cols-[320px_1fr]"><CreateTaskForm workspaceId={workspaceId} projectId={project.id} /><div><h2 className="text-lg font-semibold">Tasks</h2><div className="mt-3 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">{project.tasks.map((task) => <div key={task.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 last:border-0 dark:border-slate-800"><div><p className="font-medium">{task.title}</p><p className="text-xs text-slate-500">{task.assignee?.name ?? "Unassigned"} · {task.visibleToClient ? "Client visible" : "Internal only"}</p></div><span className="text-xs text-slate-500">{task.status.toLowerCase().replace("_", " ")} · {task.priority.toLowerCase()}</span></div>)}{!project.tasks.length ? <p className="p-4 text-sm text-slate-500">No tasks yet.</p> : null}</div></div></section>
     </main>
   );
 }
