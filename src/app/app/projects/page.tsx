@@ -13,16 +13,23 @@ export default async function ProjectsPage() {
   await requireWorkspaceMember(workspaceId);
 
   const prisma = getPrisma();
-  const [projects, clients] = await Promise.all([prisma.project.findMany({
-    where: { workspaceId },
-    orderBy: { updatedAt: "desc" },
-    take: 50,
-    select: {
-      id: true, name: true, status: true, dueDate: true,
-      client: { select: { name: true } },
-      _count: { select: { tasks: true, deliverables: true } },
-    },
-  });
+  const [projects, clients] = await Promise.all([
+    prisma.project.findMany({
+      where: { workspaceId },
+      orderBy: { updatedAt: "desc" },
+      take: 50,
+      select: {
+        id: true, name: true, status: true, dueDate: true,
+        client: { select: { name: true } },
+        _count: { select: { tasks: true, deliverables: true } },
+      },
+    }),
+    prisma.client.findMany({
+      where: { workspaceId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
@@ -32,7 +39,7 @@ export default async function ProjectsPage() {
       <div className="mt-8 grid gap-6 lg:grid-cols-[320px_1fr]"><CreateProjectForm workspaceId={workspaceId} clients={clients} /><div className="grid gap-4 md:grid-cols-2">
         {projects.map((project) => <Link key={project.id} href={`/app/projects/${project.id}`} className="rounded-2xl border border-slate-200 bg-white p-6 hover:border-indigo-300 dark:border-slate-800 dark:bg-slate-950"><div className="flex items-start justify-between gap-4"><h2 className="font-semibold">{project.name}</h2><span className="text-xs text-slate-500">{project.status.toLowerCase()}</span></div><p className="mt-2 text-sm text-slate-500">{project.client.name}</p><div className="mt-6 flex gap-5 text-xs text-slate-500"><span>{project._count.tasks} tasks</span><span>{project._count.deliverables} deliverables</span><span>{project.dueDate ? `Due ${project.dueDate.toLocaleDateString()}` : "No due date"}</span></div></Link>)}
         {!projects.length ? <p className="rounded-2xl border border-dashed border-slate-300 p-8 text-sm text-slate-500 dark:border-slate-700">No projects yet.</p> : null}
-      </div>
+      </div></div>
     </main>
   );
 }
