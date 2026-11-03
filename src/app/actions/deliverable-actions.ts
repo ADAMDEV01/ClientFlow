@@ -1,6 +1,7 @@
 "use server";
 
 import { requireClientAccess, requireRole } from "@/server/authz";
+import { getPrisma } from "@/lib/prisma";
 import { actionFailure, actionSuccess, type ActionResult } from "@/server/action-result";
 import {
   createNextDeliverableVersion,
@@ -14,42 +15,43 @@ function failure(error: unknown) {
   );
 }
 
-export async function decideDeliverableAction(
-  input: unknown,
-): Promise<ActionResult<Awaited<ReturnType<typeof decideDeliverable>>>> {
+export async function submitClientReviewAction(
+  formData: FormData,
+): Promise<ActionResult<{ id: string; status: "APPROVED" | "CHANGES_REQUESTED" }>> {
   try {
-    if (
-      typeof input !== "object" ||
-      input === null ||
-      !("workspaceId" in input) ||
-      !("deliverableId" in input) ||
-      typeof input.workspaceId !== "string" ||
-      typeof input.deliverableId !== "string"
-    ) {
-      return actionFailure("VALIDATION_ERROR", "Invalid deliverable review input.");
+    const workspaceId = String(formData.get("workspaceId") ?? "");
+    const deliverableId = String(formData.get("deliverableId") ?? "");
+    const expectedRevision = Number(formData.get("expectedRevision"));
+    const decision = String(formData.get("decision") ?? "");
+    const feedback = String(formData.get("feedback") ?? "");
+
+    if (!workspaceId || !deliverableId || !Number.isInteger(expectedRevision)) {
+      return actionFailure("VALIDATION_ERROR", "Invalid review details.");
+    }
+    if (decision !== "APPROVED" && decision !== "CHANGES_REQUESTED") {
+      return actionFailure("VALIDATION_ERROR", "Choose a valid review decision.");
+    }
+    if (decision === "CHANGES_REQUESTED" && !feedback.trim()) {
+      return actionFailure("VALIDATION_ERROR", "Feedback is required when requesting changes.");
     }
 
-    const { user, project } = await requireClientAccess(
-      input.workspaceId,
-      // The service checks the deliverable and its current submitted state.
-      // Resolve its project before passing the client-owned identity onward.
-      await (async () => {
-        const { getPrisma } = await import("@/lib/prisma");
-        const record = await getPrisma().deliverable.findFirst({
-          where: {
-            id: input.deliverableId,
-            workspaceId: input.workspaceId,
-          },
-          select: { projectId: true },
-        });
-        if (!record) throw new Error("Deliverable not found.");
-        return record.projectId;
-      })(),
-    );
+    const prisma = getPrisma();
+    const deliverable = await prisma.deliverable.findFirst({
+      where: { id: deliverableId, workspaceId },
+      select: { projectId: true },
+    });
+    if (!deliverable) return actionFailure("NOT_FOUND", "Deliverable not found.");
 
-    return actionSuccess(
-      await decideDeliverable(input, user.id, user.clientId ?? project.clientId),
-    );
+    const { user } = await requireClientAccess(workspaceId, deliverable.projectId);
+    if (!user.clientId) return actionFailure("FORBIDDEN", "Client account required.");
+
+    return actionSuccess(await decideDeliverable({
+      workspaceId,
+      deliverableId,
+      expectedRevision,
+      decision,
+      feedback,
+    }, user.id, user.clientId));
   } catch (error) {
     return failure(error);
   }

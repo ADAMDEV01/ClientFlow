@@ -44,19 +44,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, user }) {
-      if (user?.id) {
+      const currentUserId = user?.id ?? token.userId;
+      if (currentUserId && (user?.id || !token.workspaceId)) {
         const prisma = getPrisma();
         const membership = await prisma.workspaceMember.findFirst({
-          where: { userId: user.id },
+          where: { userId: currentUserId },
           orderBy: { createdAt: "asc" },
           select: { workspaceId: true, role: true },
         });
         const client = await prisma.client.findFirst({
-          where: { userId: user.id },
+          where: { userId: currentUserId },
           select: { id: true, workspaceId: true },
         });
 
-        token.userId = user.id;
+        token.userId = currentUserId;
         token.workspaceId = membership?.workspaceId ?? client?.workspaceId ?? null;
         token.role = membership?.role ?? (client ? "CLIENT" : null);
         token.clientId = client?.id ?? null;
