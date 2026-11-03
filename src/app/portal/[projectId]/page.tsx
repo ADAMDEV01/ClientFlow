@@ -44,7 +44,7 @@ export default async function ClientPortalPage({
         <h2 className="text-xl font-semibold">Deliverables</h2>
         <div className="mt-4 space-y-4">
           {project.deliverables.map((item) => <article key={item.id} className="rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
-            <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-semibold">{item.name} <span className="text-xs font-normal text-slate-500">v{item.version}</span></h3><p className="mt-1 text-sm text-slate-500">{item.description ?? item.fileName ?? "Project deliverable"}</p></div><span className="rounded-full bg-slate-100 px-3 py-1 text-xs dark:bg-slate-800">{item.status.toLowerCase().replace("_", " ")}</span></div>
+            <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-semibold">{item.name} <span className="text-xs font-normal text-slate-500">v{item.version}</span></h3><p className="mt-1 text-sm text-slate-500">{item.description ?? item.fileName ?? "Project deliverable"}</p>{item.fileName ? <a href={`/api/workspaces/${project.workspaceId}/deliverables/${item.id}/download`} className="mt-2 inline-block text-xs font-semibold text-indigo-600">Download file</a> : null}</div><span className="rounded-full bg-slate-100 px-3 py-1 text-xs dark:bg-slate-800">{item.status.toLowerCase().replace("_", " ")}</span></div>
             {item.status === "SUBMITTED" ? <form action={submitClientReviewAction} className="mt-5 space-y-3 border-t border-slate-200 pt-4 dark:border-slate-800">
               <input type="hidden" name="workspaceId" value={project.workspaceId} />
               <input type="hidden" name="deliverableId" value={item.id} />

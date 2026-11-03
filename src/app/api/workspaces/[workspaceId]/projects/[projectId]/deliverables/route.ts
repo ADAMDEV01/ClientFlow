@@ -4,7 +4,7 @@ import { requireRole } from "@/server/authz";
 import { createDeliverable } from "@/server/services/deliverable-service";
 import { getStorageProvider } from "@/server/storage";
 
-const MAX_FILE_SIZE = 15 * 1024 * 1024;
+const MAX_FILE_SIZE = 4 * 1024 * 1024;
 const ALLOWED_TYPES = new Set([
   "application/pdf",
   "image/png",
@@ -31,7 +31,7 @@ export async function POST(
       return NextResponse.json({ error: "Choose a file to upload." }, { status: 400 });
     }
     if (file.size <= 0 || file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: "File must be between 1 byte and 15 MB." }, { status: 413 });
+      return NextResponse.json({ error: "File must be between 1 byte and 4 MB." }, { status: 413 });
     }
     if (!ALLOWED_TYPES.has(file.type)) {
       return NextResponse.json({ error: "This file type is not supported." }, { status: 415 });
