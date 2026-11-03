@@ -53,3 +53,21 @@ export const deliverableDecisionSchema = z.object({
     });
   }
 });
+
+export const createMilestoneSchema = z.object({
+  projectId: cuidSchema,
+  name: z.string().trim().min(2).max(120),
+  description: z.string().trim().max(3000).optional(),
+  dueDate: z.coerce.date().optional(),
+});
+
+export const createDeliverableSchema = z.object({
+  projectId: cuidSchema,
+  name: z.string().trim().min(2).max(160),
+  description: z.string().trim().max(3000).optional(),
+});
+
+export const createInvitationSchema = z.object({
+  email: z.string().trim().email().max(254).transform((value) => value.toLowerCase()),
+  role: z.enum(["ADMIN", "MEMBER"]).default("MEMBER"),
+});

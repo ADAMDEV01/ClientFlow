@@ -116,3 +116,87 @@ export async function createNextDeliverableVersion(
     return next;
   });
 }
+
+export async function createDeliverable(
+  workspaceId: string,
+  actorId: string,
+  input: unknown,
+) {
+  const { createDeliverableSchema } = await import("@/lib/validations/common");
+  const data = createDeliverableSchema.parse(input);
+  const prisma = getPrisma();
+
+  return prisma.$transaction(async (tx) => {
+    const project = await tx.project.findFirst({
+      where: { id: data.projectId, workspaceId },
+      select: { id: true },
+    });
+    if (!project) throw new Error("Project not found in this workspace.");
+
+    const deliverable = await tx.deliverable.create({
+      data: {
+        workspaceId,
+        projectId: project.id,
+        name: data.name,
+        description: data.description,
+        version: 1,
+        status: "DRAFT",
+      },
+      select: { id: true, name: true, version: true, status: true },
+    });
+
+    await writeActivity(tx, {
+      workspaceId,
+      actorId,
+      action: "CREATED",
+      entityType: "Deliverable",
+      entityId: deliverable.id,
+      metadata: { projectId: project.id, version: 1 },
+    });
+
+    return deliverable;
+  });
+}
+
+export async function submitDeliverable(
+  workspaceId: string,
+  actorId: string,
+  deliverableId: string,
+  expectedRevision: number,
+) {
+  const prisma = getPrisma();
+
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.deliverable.updateMany({
+      where: {
+        id: deliverableId,
+        workspaceId,
+        status: { in: ["DRAFT", "CHANGES_REQUESTED"] },
+        revision: expectedRevision,
+      },
+      data: {
+        status: "SUBMITTED",
+        revision: { increment: 1 },
+        submittedAt: new Date(),
+        decidedAt: null,
+      },
+    });
+
+    if (updated.count !== 1) {
+      throw new Error("Deliverable changed or is not ready for submission.");
+    }
+
+    await writeActivity(tx, {
+      workspaceId,
+      actorId,
+      action: "SUBMITTED",
+      entityType: "Deliverable",
+      entityId: deliverableId,
+    });
+
+    return tx.deliverable.findFirstOrThrow({
+      where: { id: deliverableId, workspaceId },
+      select: { id: true, status: true, revision: true, submittedAt: true },
+    });
+  });
+}

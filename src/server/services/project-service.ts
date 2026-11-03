@@ -149,3 +149,50 @@ export async function createTask(
     return task;
   });
 }
+
+export async function createMilestone(
+  workspaceId: string,
+  actorId: string,
+  input: unknown,
+) {
+  const { createMilestoneSchema } = await import("@/lib/validations/common");
+  const data = createMilestoneSchema.parse(input);
+  const prisma = getPrisma();
+
+  return prisma.$transaction(async (tx) => {
+    const project = await tx.project.findFirst({
+      where: { id: data.projectId, workspaceId },
+      select: { id: true },
+    });
+    if (!project) throw new Error("Project not found in this workspace.");
+
+    const last = await tx.milestone.findFirst({
+      where: { workspaceId, projectId: project.id },
+      orderBy: { position: "desc" },
+      select: { position: true },
+    });
+
+    const milestone = await tx.milestone.create({
+      data: {
+        workspaceId,
+        projectId: project.id,
+        name: data.name,
+        description: data.description,
+        dueDate: data.dueDate,
+        position: (last?.position ?? -1) + 1,
+      },
+      select: { id: true, name: true, dueDate: true, position: true },
+    });
+
+    await writeActivity(tx, {
+      workspaceId,
+      actorId,
+      action: "CREATED",
+      entityType: "Milestone",
+      entityId: milestone.id,
+      metadata: { projectId: project.id },
+    });
+
+    return milestone;
+  });
+}
