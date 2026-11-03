@@ -2,7 +2,7 @@
 
 import { requireRole } from "@/server/authz";
 import { actionFailure, actionSuccess, type ActionResult } from "@/server/action-result";
-import { createClient, createMilestone, createProject, createTask } from "@/server/services/project-service";
+import { createClient, createMilestone, createProject, createTask, updateTaskStatus, linkClientPortalAccount } from "@/server/services/project-service";
 
 function failure(error: unknown) {
   return actionFailure(
@@ -116,4 +116,29 @@ export async function createMilestoneFormAction(
     dueDate: formData.get("dueDate") || undefined,
   });
   return result.ok ? { success: "Milestone created." } : { error: result.error.message };
+}
+
+export async function updateTaskStatusAction(
+  workspaceId: string,
+  input: unknown,
+): Promise<ActionResult<Awaited<ReturnType<typeof updateTaskStatus>>>> {
+  try {
+    const { user } = await requireRole(workspaceId, ["OWNER", "ADMIN", "MEMBER"]);
+    return actionSuccess(await updateTaskStatus(workspaceId, user.id, input));
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function linkClientPortalAccountAction(
+  workspaceId: string,
+  clientId: string,
+  email: string,
+): Promise<ActionResult<{ clientId: string; linked: boolean }>> {
+  try {
+    const { user } = await requireRole(workspaceId, ["OWNER", "ADMIN"]);
+    return actionSuccess(await linkClientPortalAccount(workspaceId, user.id, clientId, email));
+  } catch (error) {
+    return failure(error);
+  }
 }

@@ -71,3 +71,8 @@ export const createInvitationSchema = z.object({
   email: z.string().trim().email().max(254).transform((value) => value.toLowerCase()),
   role: z.enum(["ADMIN", "MEMBER"]).default("MEMBER"),
 });
+
+export const taskStatusSchema = z.object({
+  taskId: cuidSchema,
+  status: z.enum(["TODO", "IN_PROGRESS", "IN_REVIEW", "DONE"]),
+});

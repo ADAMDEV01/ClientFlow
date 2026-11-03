@@ -196,3 +196,79 @@ export async function createMilestone(
     return milestone;
   });
 }
+
+export async function updateTaskStatus(
+  workspaceId: string,
+  actorId: string,
+  input: unknown,
+) {
+  const { taskStatusSchema } = await import("@/lib/validations/common");
+  const data = taskStatusSchema.parse(input);
+  const prisma = getPrisma();
+
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.task.updateMany({
+      where: { id: data.taskId, workspaceId },
+      data: {
+        status: data.status,
+        completedAt: data.status === "DONE" ? new Date() : null,
+      },
+    });
+    if (updated.count !== 1) throw new Error("Task not found in this workspace.");
+
+    await writeActivity(tx, {
+      workspaceId,
+      actorId,
+      action: "UPDATED",
+      entityType: "Task",
+      entityId: data.taskId,
+      metadata: { status: data.status },
+    });
+
+    return tx.task.findFirstOrThrow({
+      where: { id: data.taskId, workspaceId },
+      select: { id: true, status: true, completedAt: true },
+    });
+  });
+}
+
+export async function linkClientPortalAccount(
+  workspaceId: string,
+  actorId: string,
+  clientId: string,
+  email: string,
+) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const prisma = getPrisma();
+
+  return prisma.$transaction(async (tx) => {
+    const client = await tx.client.findFirst({
+      where: { id: clientId, workspaceId, email: normalizedEmail },
+      select: { id: true, email: true, userId: true },
+    });
+    if (!client) throw new Error("Client email must match the client record.");
+    if (client.userId) throw new Error("This client already has a portal account.");
+
+    const account = await tx.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true },
+    });
+    if (!account) throw new Error("Ask the client to create an account first.");
+
+    await tx.client.updateMany({
+      where: { id: clientId, workspaceId, userId: null },
+      data: { userId: account.id },
+    });
+
+    await writeActivity(tx, {
+      workspaceId,
+      actorId,
+      action: "UPDATED",
+      entityType: "Client",
+      entityId: clientId,
+      metadata: { portalAccountLinked: true },
+    });
+
+    return { clientId, linked: true };
+  });
+}
