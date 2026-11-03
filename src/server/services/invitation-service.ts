@@ -71,6 +71,7 @@ export async function createWorkspaceInvitation(
 export async function acceptWorkspaceInvitation(
   userId: string,
   userEmail: string,
+  workspaceId: string,
   token: string,
 ) {
   if (!token || token.length > 200) throw new Error("Invalid invitation token.");
@@ -80,6 +81,7 @@ export async function acceptWorkspaceInvitation(
   return prisma.$transaction(async (tx) => {
     const invitation = await tx.invitation.findFirst({
       where: {
+        workspaceId,
         tokenHash,
         status: "PENDING",
         expiresAt: { gt: new Date() },
@@ -96,6 +98,12 @@ export async function acceptWorkspaceInvitation(
       throw new Error("Invitation is invalid, expired, or belongs to another email.");
     }
 
+    const invitationUpdate = await tx.invitation.updateMany({
+      where: { id: invitation.id, workspaceId, status: "PENDING" },
+      data: { status: "ACCEPTED", acceptedAt: new Date() },
+    });
+    if (invitationUpdate.count !== 1) throw new Error("Invitation has already been used.");
+
     await tx.workspaceMember.upsert({
       where: {
         workspaceId_userId: {
@@ -109,11 +117,6 @@ export async function acceptWorkspaceInvitation(
         role: invitation.role,
       },
       update: { role: invitation.role },
-    });
-
-    await tx.invitation.updateMany({
-      where: { id: invitation.id, status: "PENDING" },
-      data: { status: "ACCEPTED", acceptedAt: new Date() },
     });
 
     await writeActivity(tx, {

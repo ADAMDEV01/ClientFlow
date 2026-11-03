@@ -23,8 +23,9 @@ export async function createInvitationAction(
 export async function acceptInvitationAction(formData: FormData): Promise<void> {
   const user = await requireAuthenticatedUser();
   if (!user.email) throw new Error("Your account needs an email address.");
+  const workspaceId = String(formData.get("workspaceId") ?? "");
   const token = String(formData.get("token") ?? "");
-  await acceptWorkspaceInvitation(user.id, user.email, token);
+  await acceptWorkspaceInvitation(user.id, user.email, workspaceId, token);
   redirect("/app");
 }
 
@@ -40,5 +41,5 @@ export async function createInvitationFormAction(
     role: formData.get("role"),
   });
   if (!result.ok) return { error: result.error.message };
-  return { inviteUrl: `/invite/${result.data.token}` };
+  return { inviteUrl: `/invite/${result.data.token}?workspaceId=${workspaceId}` };
 }

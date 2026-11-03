@@ -255,10 +255,11 @@ export async function linkClientPortalAccount(
     });
     if (!account) throw new Error("Ask the client to create an account first.");
 
-    await tx.client.updateMany({
+    const linked = await tx.client.updateMany({
       where: { id: clientId, workspaceId, userId: null },
       data: { userId: account.id },
     });
+    if (linked.count !== 1) throw new Error("Client portal account was linked by another request.");
 
     await writeActivity(tx, {
       workspaceId,
