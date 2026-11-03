@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { createDeliverableFormAction, submitDeliverableFormAction, type DeliverableFormState } from "@/app/actions/deliverable-actions";
+import { createDeliverableFormAction, submitDeliverableFormAction } from "@/app/actions/deliverable-actions";
 import {
   createClientFormAction,
   createProjectFormAction,

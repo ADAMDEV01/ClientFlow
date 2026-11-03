@@ -27,3 +27,18 @@ export async function acceptInvitationAction(formData: FormData): Promise<void> 
   await acceptWorkspaceInvitation(user.id, user.email, token);
   redirect("/app");
 }
+
+export type InvitationFormState = { error?: string; inviteUrl?: string };
+
+export async function createInvitationFormAction(
+  _previousState: InvitationFormState,
+  formData: FormData,
+): Promise<InvitationFormState> {
+  const workspaceId = String(formData.get("workspaceId") ?? "");
+  const result = await createInvitationAction(workspaceId, {
+    email: formData.get("email"),
+    role: formData.get("role"),
+  });
+  if (!result.ok) return { error: result.error.message };
+  return { inviteUrl: `/invite/${result.data.token}` };
+}
