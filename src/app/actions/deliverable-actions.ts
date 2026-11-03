@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { requireClientAccess, requireRole } from "@/server/authz";
 import { getPrisma } from "@/lib/prisma";
 import { actionFailure, actionSuccess, type ActionResult } from "@/server/action-result";
@@ -15,9 +16,7 @@ function failure(error: unknown) {
   );
 }
 
-export async function submitClientReviewAction(
-  formData: FormData,
-): Promise<ActionResult<{ id: string; status: "APPROVED" | "CHANGES_REQUESTED" }>> {
+export async function submitClientReviewAction(formData: FormData): Promise<void> {
   try {
     const workspaceId = String(formData.get("workspaceId") ?? "");
     const deliverableId = String(formData.get("deliverableId") ?? "");
@@ -26,13 +25,13 @@ export async function submitClientReviewAction(
     const feedback = String(formData.get("feedback") ?? "");
 
     if (!workspaceId || !deliverableId || !Number.isInteger(expectedRevision)) {
-      return actionFailure("VALIDATION_ERROR", "Invalid review details.");
+      throw new Error("Invalid review details.");
     }
     if (decision !== "APPROVED" && decision !== "CHANGES_REQUESTED") {
-      return actionFailure("VALIDATION_ERROR", "Choose a valid review decision.");
+      throw new Error("Choose a valid review decision.");
     }
     if (decision === "CHANGES_REQUESTED" && !feedback.trim()) {
-      return actionFailure("VALIDATION_ERROR", "Feedback is required when requesting changes.");
+      throw new Error("Feedback is required when requesting changes.");
     }
 
     const prisma = getPrisma();
@@ -40,20 +39,21 @@ export async function submitClientReviewAction(
       where: { id: deliverableId, workspaceId },
       select: { projectId: true },
     });
-    if (!deliverable) return actionFailure("NOT_FOUND", "Deliverable not found.");
+    if (!deliverable) throw new Error("Deliverable not found.");
 
     const { user } = await requireClientAccess(workspaceId, deliverable.projectId);
-    if (!user.clientId) return actionFailure("FORBIDDEN", "Client account required.");
+    if (!user.clientId) throw new Error("Client account required.");
 
-    return actionSuccess(await decideDeliverable({
+    await decideDeliverable({
       workspaceId,
       deliverableId,
       expectedRevision,
       decision,
       feedback,
-    }, user.id, user.clientId));
+    }, user.id, user.clientId);
+    revalidatePath(`/portal/${deliverable.projectId}`);
   } catch (error) {
-    return failure(error);
+    throw new Error(error instanceof Error ? error.message : "Review failed.");
   }
 }
 

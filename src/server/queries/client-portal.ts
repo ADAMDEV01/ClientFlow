@@ -48,6 +48,7 @@ export async function getClientProjectPortal(
         },
       },
       deliverables: {
+        where: { status: { in: ["SUBMITTED", "APPROVED", "CHANGES_REQUESTED"] } },
         orderBy: [{ name: "asc" }, { version: "desc" }],
         select: {
           id: true,
