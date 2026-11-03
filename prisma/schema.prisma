@@ -42,6 +42,11 @@ enum DeliverableStatus {
   CHANGES_REQUESTED
 }
 
+enum ReviewDecision {
+  APPROVED
+  CHANGES_REQUESTED
+}
+
 enum InvitationStatus {
   PENDING
   ACCEPTED
@@ -246,7 +251,7 @@ model Review {
   workspaceId   String
   deliverableId String
   clientId      String
-  decision      DeliverableStatus
+  decision      ReviewDecision
   feedback      String?
   createdAt     DateTime          @default(now())
   deliverable   Deliverable       @relation(fields: [deliverableId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
