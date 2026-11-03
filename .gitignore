@@ -13,3 +13,5 @@ test-results/
 .DS_Store
 .vercel/
 src/generated/
+
+.clientflow-storage/
