@@ -65,6 +65,10 @@ export const createDeliverableSchema = z.object({
   projectId: cuidSchema,
   name: z.string().trim().min(2).max(160),
   description: z.string().trim().max(3000).optional(),
+  fileKey: z.string().min(1).max(500).optional(),
+  fileName: z.string().trim().min(1).max(255).optional(),
+  mimeType: z.string().min(1).max(120).optional(),
+  sizeBytes: z.number().int().positive().max(15 * 1024 * 1024).optional(),
 });
 
 export const createInvitationSchema = z.object({
