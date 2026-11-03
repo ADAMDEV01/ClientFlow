@@ -5,8 +5,10 @@ import { requireClientAccess, requireRole } from "@/server/authz";
 import { getPrisma } from "@/lib/prisma";
 import { actionFailure, actionSuccess, type ActionResult } from "@/server/action-result";
 import {
+  createDeliverable,
   createNextDeliverableVersion,
   decideDeliverable,
+  submitDeliverable,
 } from "@/server/services/deliverable-service";
 
 function failure(error: unknown) {
@@ -65,6 +67,33 @@ export async function createNextDeliverableVersionAction(
     const { user } = await requireRole(workspaceId, ["OWNER", "ADMIN", "MEMBER"]);
     return actionSuccess(
       await createNextDeliverableVersion(workspaceId, user.id, deliverableId),
+    );
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function createDeliverableAction(
+  workspaceId: string,
+  input: unknown,
+): Promise<ActionResult<Awaited<ReturnType<typeof createDeliverable>>>> {
+  try {
+    const { user } = await requireRole(workspaceId, ["OWNER", "ADMIN", "MEMBER"]);
+    return actionSuccess(await createDeliverable(workspaceId, user.id, input));
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function submitDeliverableAction(
+  workspaceId: string,
+  deliverableId: string,
+  expectedRevision: number,
+): Promise<ActionResult<Awaited<ReturnType<typeof submitDeliverable>>>> {
+  try {
+    const { user } = await requireRole(workspaceId, ["OWNER", "ADMIN", "MEMBER"]);
+    return actionSuccess(
+      await submitDeliverable(workspaceId, user.id, deliverableId, expectedRevision),
     );
   } catch (error) {
     return failure(error);

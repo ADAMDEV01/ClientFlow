@@ -2,7 +2,7 @@
 
 import { requireRole } from "@/server/authz";
 import { actionFailure, actionSuccess, type ActionResult } from "@/server/action-result";
-import { createClient, createProject, createTask } from "@/server/services/project-service";
+import { createClient, createMilestone, createProject, createTask } from "@/server/services/project-service";
 
 function failure(error: unknown) {
   return actionFailure(
@@ -90,4 +90,16 @@ export async function createTaskFormAction(
     dueDate: formData.get("dueDate") || undefined,
   });
   return result.ok ? { success: "Task created." } : { error: result.error.message };
+}
+
+export async function createMilestoneAction(
+  workspaceId: string,
+  input: unknown,
+): Promise<ActionResult<Awaited<ReturnType<typeof createMilestone>>>> {
+  try {
+    const { user } = await requireRole(workspaceId, ["OWNER", "ADMIN", "MEMBER"]);
+    return actionSuccess(await createMilestone(workspaceId, user.id, input));
+  } catch (error) {
+    return failure(error);
+  }
 }

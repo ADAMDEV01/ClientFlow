@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import argon2 from "argon2";
 import { z } from "zod";
 import { getPrisma } from "@/lib/prisma";
+import { consumeRateLimit } from "@/server/services/rate-limit";
 
 const credentialsSchema = z.object({
   email: z.string().trim().email().max(254),
@@ -19,6 +20,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(rawCredentials) {
         const parsed = credentialsSchema.safeParse(rawCredentials);
         if (!parsed.success) return null;
+
+        const allowed = await consumeRateLimit(
+          `login:${parsed.data.email.toLowerCase()}`,
+          8,
+          15 * 60,
+        );
+        if (!allowed) return null;
 
         const prisma = getPrisma();
         const user = await prisma.user.findUnique({
