@@ -99,3 +99,29 @@ export async function submitDeliverableAction(
     return failure(error);
   }
 }
+
+export type DeliverableFormState = { error?: string; success?: string };
+
+export async function createDeliverableFormAction(
+  _previousState: DeliverableFormState,
+  formData: FormData,
+): Promise<DeliverableFormState> {
+  const workspaceId = String(formData.get("workspaceId") ?? "");
+  const result = await createDeliverableAction(workspaceId, {
+    projectId: formData.get("projectId"),
+    name: formData.get("name"),
+    description: formData.get("description") || undefined,
+  });
+  return result.ok ? { success: "Deliverable draft created." } : { error: result.error.message };
+}
+
+export async function submitDeliverableFormAction(
+  _previousState: DeliverableFormState,
+  formData: FormData,
+): Promise<DeliverableFormState> {
+  const workspaceId = String(formData.get("workspaceId") ?? "");
+  const deliverableId = String(formData.get("deliverableId") ?? "");
+  const expectedRevision = Number(formData.get("expectedRevision"));
+  const result = await submitDeliverableAction(workspaceId, deliverableId, expectedRevision);
+  return result.ok ? { success: "Deliverable submitted for client review." } : { error: result.error.message };
+}

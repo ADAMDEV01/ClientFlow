@@ -1,10 +1,12 @@
 "use client";
 
 import { useActionState } from "react";
+import { createDeliverableFormAction, submitDeliverableFormAction, type DeliverableFormState } from "@/app/actions/deliverable-actions";
 import {
   createClientFormAction,
   createProjectFormAction,
   createTaskFormAction,
+  createMilestoneFormAction,
   type ProjectFormState,
 } from "@/app/actions/project-actions";
 
@@ -55,5 +57,38 @@ export function CreateTaskForm({ workspaceId, projectId }: { workspaceId: string
     <label className="flex items-center gap-2 text-sm"><input name="visibleToClient" type="checkbox" /> Visible to client</label>
     <FormFeedback state={state} />
     <button disabled={pending} className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">{pending ? "Adding…" : "Add task"}</button>
+  </form>;
+}
+
+export function CreateMilestoneForm({ workspaceId, projectId }: { workspaceId: string; projectId: string }) {
+  const [state, action, pending] = useActionState(createMilestoneFormAction, initialState);
+  return <form action={action} className="grid gap-3 rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
+    <input type="hidden" name="workspaceId" value={workspaceId} /><input type="hidden" name="projectId" value={projectId} />
+    <h2 className="font-semibold">Add a milestone</h2>
+    <input name="name" required minLength={2} maxLength={120} placeholder="Milestone name" className={fieldClass} />
+    <input name="dueDate" type="date" className={fieldClass} />
+    <FormFeedback state={state} />
+    <button disabled={pending} className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold dark:border-slate-700">{pending ? "Adding…" : "Add milestone"}</button>
+  </form>;
+}
+
+export function CreateDeliverableForm({ workspaceId, projectId }: { workspaceId: string; projectId: string }) {
+  const [state, action, pending] = useActionState(createDeliverableFormAction, initialState);
+  return <form action={action} className="grid gap-3 rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
+    <input type="hidden" name="workspaceId" value={workspaceId} /><input type="hidden" name="projectId" value={projectId} />
+    <h2 className="font-semibold">Create a deliverable draft</h2>
+    <input name="name" required minLength={2} maxLength={160} placeholder="Deliverable name" className={fieldClass} />
+    <textarea name="description" rows={2} maxLength={3000} placeholder="Description (optional)" className={fieldClass} />
+    <FormFeedback state={state} />
+    <button disabled={pending} className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold dark:border-slate-700">{pending ? "Creating…" : "Create draft"}</button>
+  </form>;
+}
+
+export function SubmitDeliverableForm({ workspaceId, deliverableId, revision }: { workspaceId: string; deliverableId: string; revision: number }) {
+  const [state, action, pending] = useActionState(submitDeliverableFormAction, initialState);
+  return <form action={action} className="mt-3">
+    <input type="hidden" name="workspaceId" value={workspaceId} /><input type="hidden" name="deliverableId" value={deliverableId} /><input type="hidden" name="expectedRevision" value={revision} />
+    <FormFeedback state={state} />
+    <button disabled={pending} className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60">{pending ? "Submitting…" : "Submit for review"}</button>
   </form>;
 }

@@ -103,3 +103,17 @@ export async function createMilestoneAction(
     return failure(error);
   }
 }
+
+export async function createMilestoneFormAction(
+  _previousState: ProjectFormState,
+  formData: FormData,
+): Promise<ProjectFormState> {
+  const workspaceId = String(formData.get("workspaceId") ?? "");
+  const result = await createMilestoneAction(workspaceId, {
+    projectId: formData.get("projectId"),
+    name: formData.get("name"),
+    description: formData.get("description") || undefined,
+    dueDate: formData.get("dueDate") || undefined,
+  });
+  return result.ok ? { success: "Milestone created." } : { error: result.error.message };
+}
