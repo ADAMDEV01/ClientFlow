@@ -8,7 +8,7 @@ import { actionFailure, actionSuccess, type ActionResult } from "@/server/action
 export async function createInvitationAction(
   workspaceId: string,
   input: unknown,
-): Promise<ActionResult<{ id: string; email: string; role: string; expiresAt: Date; token: string; invitationUrl: string }>> {
+): Promise<ActionResult<{ id: string; email: string; role: string; expiresAt: Date; token: string; invitationUrl: string; emailSent: boolean }>> {
   try {
     const { user } = await requireRole(workspaceId, ["OWNER", "ADMIN"]);
     return actionSuccess(await createWorkspaceInvitation(workspaceId, user.id, input));
@@ -29,7 +29,7 @@ export async function acceptInvitationAction(formData: FormData): Promise<void> 
   redirect("/app");
 }
 
-export type InvitationFormState = { error?: string; inviteUrl?: string };
+export type InvitationFormState = { error?: string; inviteUrl?: string; emailSent?: boolean };
 
 export async function createInvitationFormAction(
   _previousState: InvitationFormState,
@@ -41,5 +41,5 @@ export async function createInvitationFormAction(
     role: formData.get("role"),
   });
   if (!result.ok) return { error: result.error.message };
-  return { inviteUrl: result.data.invitationUrl };
+  return { inviteUrl: result.data.invitationUrl, emailSent: result.data.emailSent };
 }
