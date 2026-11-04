@@ -37,13 +37,13 @@ export async function createClientPortalInvitation(workspaceId: string, actorId:
     return row;
   });
   const url = new URL(`/client-invite/${token}`, getAppBaseUrl()).toString();
-  await sendInvitationEmail({
+  const emailSent = await sendInvitationEmail({
     to: client.email,
     subject: "Your ClientFlow portal invitation",
     html: `<p>You have been invited to the ClientFlow portal for <strong>${escapeHtml(client.name)}</strong>.</p><p><a href="${url}">Accept invitation</a></p><p>This link expires in ${EXPIRY_DAYS} days and can only be used once.</p>`,
     text: `You have been invited to the ClientFlow portal for ${client.name}. Accept invitation: ${url}\nThis link expires in ${EXPIRY_DAYS} days and can only be used once.`,
   });
-  return { ...invitation, clientName: client.name, token, invitationUrl: url };
+  return { ...invitation, clientName: client.name, token, invitationUrl: url, emailSent };
 }
 
 export async function getClientPortalInvitation(token: string) {
