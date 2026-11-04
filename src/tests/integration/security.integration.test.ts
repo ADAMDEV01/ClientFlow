@@ -9,7 +9,7 @@ import { requireClientProjectAccess, requireRole } from "@/server/authz";
 import { decideDeliverable, submitDeliverable } from "@/server/services/deliverable-service";
 import { consumeRateLimit } from "@/server/services/rate-limit";
 import { changeMemberRole } from "@/server/services/phase3-service";
-import { deleteProjectAction, changeMemberRoleAction } from "@/app/actions/phase3-actions";
+import { deleteProjectAction, changeMemberRoleAction, removeWorkspaceMemberAction } from "@/app/actions/phase3-actions";
 import { createInvitationAction } from "@/app/actions/invitation-actions";
 
 const prisma = getPrisma();
@@ -261,6 +261,42 @@ describe("server action authorization matrix", () => {
       await prisma.user.delete({ where: { id: target.id } });
     }
   });
+  it.each(roles)("removeWorkspaceMemberAction enforces the persisted role for %s", async (role) => {
+    authMock.mockResolvedValue({
+      user: { id: users.get(role), role, clientId: role === "CLIENT" ? clientId : null },
+    });
+    const target = await prisma.user.create({
+      data: {
+        email: `remove-target-${role.toLowerCase()}-${suffix}@example.test`,
+        passwordHash: "integration-test-only-not-a-real-password-hash",
+      },
+      select: { id: true },
+    });
+    const membership = await prisma.workspaceMember.create({
+      data: { workspaceId, userId: target.id, role: "MEMBER" },
+      select: { id: true },
+    });
+
+    try {
+      const result = await removeWorkspaceMemberAction(workspaceId, {
+        memberId: membership.id,
+      });
+      const allowed = role === "OWNER";
+      expect(result.ok).toBe(allowed);
+      const remaining = await prisma.workspaceMember.findUnique({
+        where: { id: membership.id },
+        select: { id: true },
+      });
+      if (allowed) {
+        expect(remaining).toBeNull();
+      } else {
+        expect(remaining).toMatchObject({ id: membership.id });
+      }
+    } finally {
+      await prisma.user.delete({ where: { id: target.id } });
+    }
+  });
+
 });
 
 describe("workspace owner invariant", () => {
