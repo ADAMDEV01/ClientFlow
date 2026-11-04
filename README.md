@@ -1,34 +1,31 @@
 # ClientFlow
 
-ClientFlow is a multi-tenant client and project management SaaS for freelancers and small agencies. Teams manage projects, milestones, tasks, and versioned deliverables; clients receive a restricted portal for progress and review.
+ClientFlow is a multi-tenant client and project management SaaS for freelancers and small agencies. Teams manage clients, projects, milestones, tasks, and versioned deliverables. Clients receive a restricted portal to track shared progress and approve or request changes to submitted work.
 
-## Technology
+## Stack
 
-- Next.js App Router and React Server Components
-- TypeScript in strict mode
-- PostgreSQL and Prisma ORM
-- Auth.js (Credentials authentication and JWT sessions)
+- Next.js App Router, React Server Components, Server Actions, Route Handlers
+- TypeScript strict mode
+- PostgreSQL and Prisma 7
+- Auth.js Credentials with JWT sessions
+- Argon2id password hashing
 - Tailwind CSS
 - Zod validation
 - Vitest and Playwright
-- Deployment target: Vercel with Neon PostgreSQL
-
-## Requirements
-
-- Node.js 22+
-- npm
-- PostgreSQL 15+ (Neon is recommended for hosted environments)
+- Vercel deployment target with Neon PostgreSQL
+- Local private file storage in development; S3-compatible private object storage in production
 
 ## Local setup
 
-1. Clone the repository and check out the working branch.
-2. Install dependencies:
+Requirements: Node.js 22+, npm, and PostgreSQL.
+
+1. Install dependencies:
 
    ```bash
    npm install
    ```
 
-3. Create your local environment file:
+2. Create `.env`:
 
    **PowerShell**
    ```powershell
@@ -40,20 +37,55 @@ ClientFlow is a multi-tenant client and project management SaaS for freelancers 
    cp .env.example .env
    ```
 
-4. Set `DATABASE_URL` to your PostgreSQL connection string and replace `AUTH_SECRET` with a random secret of at least 32 characters.
-5. Generate the Prisma Client:
+3. Configure `DATABASE_URL` and a random `AUTH_SECRET` (at least 32 characters).
+4. Generate the Prisma Client:
 
    ```bash
    npm run db:generate
    ```
 
-6. Start the development server:
+5. Apply the Prisma migration(s):
+
+   ```bash
+   npm run db:migrate
+   ```
+
+6. Start the app:
 
    ```bash
    npm run dev
    ```
 
-7. Open http://localhost:3000.
+Open http://localhost:3000, create an account, and create a workspace.
+
+## Main flows currently implemented
+
+- Account registration and Credentials sign-in with Argon2id verification.
+- Workspace creation and OWNER membership.
+- Workspace-scoped client and project creation.
+- Project milestones and task creation/status changes.
+- Client portal account linking to an existing account with a matching email.
+- Restricted client portal project overview; only tasks marked `visibleToClient` are returned.
+- Deliverable drafts, submission, client approval or change requests, and version creation after requested changes.
+- Optimistic revision checks to prevent duplicate deliverable decisions.
+- Transactional Activity records for supported mutations.
+- Workspace invitations with hashed, expiring tokens and acceptance.
+- Database-backed login and invitation rate limits.
+- Private file upload/download through local storage in development and S3-compatible storage in production.
+
+## Production object storage
+
+Configure these environment variables in Vercel (or the deployment environment):
+
+- `S3_BUCKET`
+- `S3_REGION`
+- `S3_ACCESS_KEY_ID`
+- `S3_SECRET_ACCESS_KEY`
+- Optional `S3_ENDPOINT` for S3-compatible services such as Cloudflare R2.
+
+The production storage adapter uses server-side credentials and does not expose object URLs publicly. Downloads are streamed through an authenticated Route Handler.
+
+Uploads currently allow PDF, PNG, JPEG, WebP, DOCX, and XLSX files up to 4 MB. File names are sanitized for display; object keys are generated server-side.
 
 ## Quality checks
 
@@ -65,28 +97,35 @@ npm run test:e2e
 npm run build
 ```
 
-A GitHub Actions workflow runs linting, type checking, unit tests, the production build, and Playwright E2E tests on pushes and pull requests.
+GitHub Actions runs Prisma Client generation, lint, type checking, unit tests, production build, and Playwright E2E checks.
 
 ## Database commands
 
-- `npm run db:generate` — generate the Prisma Client.
-- `npm run db:migrate` — create and apply a development migration.
-- `npm run db:deploy` — apply committed migrations in deployment environments.
+- `npm run db:generate` — generate Prisma Client.
+- `npm run db:migrate` — create/apply a development migration.
+- `npm run db:deploy` — apply committed migrations in deployment.
 - `npm run db:studio` — open Prisma Studio.
 
 Commit migration files together with schema changes. Never commit `.env`, database credentials, or production secrets.
 
-## Architecture conventions
+## Security and architecture rules
 
-- Feature-specific code lives in `src/features`.
-- Shared UI lives in `src/components`.
-- Shared infrastructure and validation live in `src/lib`.
-- Server-side services and authorization live in `src/server`.
-- Tests live in `src/tests`; browser E2E tests live in `e2e`.
-- Every workspace-owned read and write must be scoped by `workspaceId`.
-- Authorization must be enforced on the server.
-- Mutations validate input and write their activity records in the same database transaction.
+- Workspace-owned reads and writes are scoped by `workspaceId`.
+- Workspace membership, role checks, and client project access are enforced server-side.
+- Client portal queries exclude internal tasks and unrelated client projects.
+- Server inputs are validated with Zod and persisted under database constraints.
+- Deliverable state transitions are explicit; decided versions are not edited in place.
+- Revision checks use conditional updates inside transactions.
+- Supported mutations create Activity records in the same transaction.
+- Services live in `src/server/services`; shared schemas live in `src/lib/validations`.
+- Private file downloads re-check workspace or client project access on every request.
 
-## Current implementation status
+## Deployment
 
-The repository currently contains the Next.js application scaffold, Prisma/PostgreSQL configuration, Auth.js route scaffolding, typed action-result helpers, and initial unit/E2E tests. The domain schema, working Credentials sign-in flow, authorization policies, and product features are not yet implemented. Do not treat the scaffold as a production-ready application.
+1. Provision Neon PostgreSQL and set `DATABASE_URL`.
+2. Set `AUTH_SECRET`, `AUTH_URL`, and the S3-compatible storage variables.
+3. Configure the Vercel project for this repository and branch.
+4. Run `npm run db:deploy` as a release/deployment step before serving the new application version.
+5. Deploy with `npm run build`.
+
+Do not consider a deployment production-ready until a real Neon database, production S3 bucket, environment variables, and the complete migration set have been configured and verified.
