@@ -135,7 +135,7 @@ npm run test:e2e
 npm run build
 ```
 
-GitHub Actions runs three independent jobs: quality/build, PostgreSQL integration tests, and Playwright E2E. The quality job also checks Prettier formatting with `npm run format:check`.
+GitHub Actions runs three independent jobs: quality/build, PostgreSQL integration tests, and Playwright E2E. The quality job also checks Prettier formatting with `npm run format:check`. E2E includes axe-core WCAG 2.1 A/AA checks and uploads a Lighthouse report covering performance, accessibility, best practices, and SEO.
 
 ## Design decisions
 
