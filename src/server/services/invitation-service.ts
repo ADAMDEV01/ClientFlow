@@ -5,6 +5,7 @@ import { getPrisma } from "@/lib/prisma";
 import { createInvitationSchema } from "@/lib/validations/common";
 import { writeActivity } from "@/server/services/activity";
 import { consumeRateLimit } from "@/server/services/rate-limit";
+import { escapeHtml, getAppBaseUrl, sendInvitationEmail } from "@/server/services/email";
 
 function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
@@ -64,8 +65,16 @@ export async function createWorkspaceInvitation(
     return created;
   });
 
-  // Return the raw token once. Only its SHA-256 hash is persisted.
-  return { ...invitation, token };
+  const invitationUrl = new URL(`/invite/${token}?workspaceId=${encodeURIComponent(workspaceId)}`, getAppBaseUrl()).toString();
+  const emailSent = await sendInvitationEmail({
+    to: invitation.email,
+    subject: "Your ClientFlow team invitation",
+    html: `<p>You have been invited to join a team on ClientFlow as a <strong>${escapeHtml(invitation.role)}</strong>.</p><p><a href="${invitationUrl}">Accept your invitation</a></p><p>This link expires in 7 days and can only be used once.</p>`,
+    text: `You have been invited to join a team on ClientFlow as a ${invitation.role}. Accept your invitation: ${invitationUrl}\nThis link expires in 7 days and can only be used once.`,
+  });
+
+  // Return the raw token once for the manual-copy fallback. Only its hash is persisted.
+  return { ...invitation, token, invitationUrl, emailSent };
 }
 
 export async function acceptWorkspaceInvitation(
