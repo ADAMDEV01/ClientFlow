@@ -164,6 +164,25 @@ describe("authorized server actions persist successful operations", () => {
     expect(await prisma.client.findUnique({ where: { id: createdClient.data.id } })).toBeNull();
   });
 
+  it("rejects an invalid app URL before persisting an invitation", async () => {
+    authMock.mockResolvedValue({ user: { id: ownerId, role: "OWNER" } });
+    const email = `invalid-url-invite-${suffix}@test.example`;
+    const previousUrl = process.env.NEXT_PUBLIC_APP_URL;
+    process.env.NEXT_PUBLIC_APP_URL = "not-a-valid-url";
+
+    try {
+      const result = await createInvitationAction(workspaceId, { email, role: "MEMBER" });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.message).toContain("Invalid NEXT_PUBLIC_APP_URL");
+      }
+      expect(await prisma.invitation.count({ where: { workspaceId, email } })).toBe(0);
+    } finally {
+      if (previousUrl === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
+      else process.env.NEXT_PUBLIC_APP_URL = previousUrl;
+    }
+  });
+
   it("creates invitations and verifies the raw token is not persisted", async () => {
     authMock.mockResolvedValue({ user: { id: ownerId, role: "OWNER" } });
     const result = await createInvitationAction(workspaceId, {
