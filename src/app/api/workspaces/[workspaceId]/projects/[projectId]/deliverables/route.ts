@@ -15,9 +15,9 @@ const ALLOWED_TYPES = new Set([
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 ]);
 
-async function readBoundedBody(request: Request, maxBytes: number): Promise<Uint8Array | null> {
+async function readBoundedBody(request: Request, maxBytes: number): Promise<ArrayBuffer | null> {
   const reader = request.body?.getReader();
-  if (!reader) return new Uint8Array();
+  if (!reader) return new ArrayBuffer(0);
 
   const chunks: Uint8Array[] = [];
   let total = 0;
@@ -36,10 +36,11 @@ async function readBoundedBody(request: Request, maxBytes: number): Promise<Uint
     reader.releaseLock();
   }
 
-  const body = new Uint8Array(total);
+  const body = new ArrayBuffer(total);
+  const output = new Uint8Array(body);
   let offset = 0;
   for (const chunk of chunks) {
-    body.set(chunk, offset);
+    output.set(chunk, offset);
     offset += chunk.byteLength;
   }
   return body;
