@@ -56,7 +56,7 @@ test("full client review lifecycle: register, invite, upload, request changes, r
     // Team uploads a real PDF and submits the deliverable for review.
     await owner.goto("/app/projects");
     await owner.getByText("E2E Website Project").click();
-    const uploadForm = owner.locator("form").filter({ has: owner.locator('input[type="file"]') });
+    const uploadForm = owner.locator("form").filter({ has: owner.locator('input[type="file"]') }).last();
     await uploadForm.locator('input[name="name"]').fill("E2E Homepage Design");
     await uploadForm.locator('input[type="file"]').setInputFiles({
       name: "homepage.pdf",
