@@ -56,7 +56,7 @@ export async function createProject(
         name: data.name,
         description: data.description,
         dueDate: data.dueDate,
-        members: { create: { workspaceId, userId: actorId } },
+        members: { create: { userId: actorId } },
       },
       select: {
         id: true,

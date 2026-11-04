@@ -79,7 +79,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.workspaceId =
           typeof token.workspaceId === "string" ? token.workspaceId : null;
         session.user.role =
-          typeof token.role === "string" ? token.role : null;
+          token.role === "OWNER" ||
+          token.role === "ADMIN" ||
+          token.role === "MEMBER" ||
+          token.role === "CLIENT"
+            ? token.role
+            : null;
         session.user.clientId =
           typeof token.clientId === "string" ? token.clientId : null;
       }
