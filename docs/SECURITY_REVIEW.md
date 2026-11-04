@@ -1,30 +1,44 @@
-# Phase 7 — Security review
+# ClientFlow security review
 
-This checklist records the controls verified in the repository and the remaining deployment checks. It is not a substitute for a production penetration test.
+Review scope: application authorization, tenant isolation, server actions, session handling,
+rate limiting, uploads/downloads, response headers, and secret configuration.
 
-## Application controls reviewed
+## Controls verified in code and automated tests
 
-- [x] **IDOR / tenant isolation:** workspace membership guards query membership by both workspace and authenticated user; project and deliverable lookups are scoped by workspace; client access additionally scopes by the linked client profile and user ID.
-- [x] **Client file access:** download repeats client/project ownership checks and only exposes deliverables in SUBMITTED, APPROVED, or CHANGES_REQUESTED states. Team downloads require workspace membership.
-- [x] **Mass assignment:** server actions parse input with Zod schemas and construct Prisma data objects from explicitly selected fields; caller-supplied role, workspace ownership, and audit actor IDs are not blindly spread into writes.
-- [x] **Rate limiting:** registration, login, and client invitation issuance use atomic database-backed fixed-window buckets. Login is limited per normalized email; registration per normalized email; invitation issuance per workspace and actor.
-- [x] **File upload abuse:** upload is authenticated and workspace-scoped; a shared database-backed limit of 20 uploads per user/workspace per hour is enforced; request content length and file size are capped; MIME type, extension, and file signature are checked; object keys are generated server-side; storage keys reject traversal; failed DB writes delete the uploaded object.
-- [x] **Session handling:** Auth.js uses JWT sessions; the session callback derives role/workspace/client identifiers from persisted database relationships; server actions re-check authorization against the database rather than trusting the role claim alone.
-- [x] **Secrets:** S3 credentials and Auth.js secret are read server-side; no credentials are returned in action/query payloads. CI uses explicitly non-production credentials.
-- [ ] **Security headers:** verify the deployed response includes HSTS (HTTPS only), frame protection, nosniff, referrer policy, and a restrictive permissions policy. Configure CSP after auditing Next.js inline scripts/styles and any external asset origins.
-- [ ] **Production rate-limit topology:** the database limiter is shared across app instances, but verify bucket cleanup/retention and operational thresholds under expected traffic.
-- [ ] **Production storage:** confirm the S3 bucket is private, public access is blocked, encryption is enabled, lifecycle/retention is configured, and IAM credentials are least-privilege.
-- [ ] **Operational secrets:** rotate any credentials ever exposed in logs or local files; configure AUTH_SECRET, DATABASE_URL, S3 credentials, RESEND credentials, and the canonical application URL in the deployment provider.
+| Area | Control | Verification |
+| --- | --- | --- |
+| IDOR / tenant isolation | Workspace membership checks are scoped by workspaceId and userId. Client access additionally binds the signed-in user, client profile, project, and workspace. Project/deliverable queries and download checks retain workspace scope. | PostgreSQL integration tests cover cross-workspace team access and cross-client/project access. |
+| Role authorization | Sensitive server actions use explicit role allowlists: OWNER/ADMIN/MEMBER for project work, OWNER/ADMIN for invitations and destructive record operations, OWNER for role administration. Client review requires the linked CLIENT profile. | PostgreSQL role/action matrix covers OWNER, ADMIN, MEMBER, and CLIENT. |
+| Mass assignment | Server actions pass selected fields into server-side Zod schemas; services construct Prisma data objects field-by-field rather than forwarding request objects. | Unit validation tests and PostgreSQL authorization tests. |
+| State transitions | Deliverable status changes use an explicit state machine and conditional updates against expected revision/status. Review, activity, and status changes commit together. | State-machine unit tests and PostgreSQL concurrent-decision integration test. |
+| Rate limiting | Database-backed atomic fixed-window counters cover credential login, registration, client invitations, and uploads. | PostgreSQL concurrency test verifies the configured limit under parallel calls. |
+| File upload | Uploads are limited to 4 MB, allowlisted MIME types/extensions, checked against file signatures, stored under generated opaque keys, and removed if metadata persistence fails. Downloads require authenticated workspace/client access and return attachment, private/no-store, and nosniff headers. | Full lifecycle Playwright test uploads a PDF. |
+| Session handling | Auth.js uses JWT sessions; authorization guards re-check current workspace membership in the database instead of trusting a workspace ID supplied by the browser. | Unit and PostgreSQL authorization tests. |
+| Security headers | X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, and production HSTS are configured; powered-by header is disabled. | Next.js configuration review. |
+| Secrets | The environment example contains placeholders only. Production object-storage credentials and Auth secret are read server-side; CI uses disposable test-only credentials. | Repository configuration review. |
 
-## Threat-oriented test coverage
+## Finding and hardening applied
 
-- Authorization matrix for OWNER, ADMIN, MEMBER, CLIENT, unauthenticated, and cross-workspace identities.
-- Cross-workspace resource-ID substitution for projects, deliverables, and client portal access.
-- Invalid deliverable state transitions and stale-revision concurrent updates.
-- Upload boundary tests for oversized, empty, mismatched MIME/extension/signature, and storage cleanup failures.
-- Session role changes and stale JWT behavior.
-- Login, registration, and invitation rate-limit boundaries.
+- The upload API previously treated a missing Content-Length as zero, allowing a caller to bypass the early request-size check before multipart parsing. The route now requires a valid positive Content-Length and rejects requests exceeding the file limit plus bounded multipart overhead.
+- CI runs PostgreSQL integration tests and the full browser lifecycle independently from the quality/build job.
 
-## Review notes
+## Residual deployment requirements and limitations
 
-The upload route currently relies on the framework/runtime request-body limit in addition to the post-parse 4 MiB file check. Configure a hosting-level request-body ceiling as defense in depth. The current email provider stub is not a security control; production email delivery must be configured separately.
+- Configure a strong, unique AUTH_SECRET and HTTPS AUTH_URL in production. Never reuse CI credentials.
+- Configure a private S3-compatible bucket with least-privilege access. Public bucket access must remain disabled; do not expose object keys as public URLs.
+- Configure shared durable rate-limit storage for horizontally scaled production instances. The current PostgreSQL limiter is shared when all instances use the same database.
+- Configure RESEND_API_KEY and RESEND_FROM_EMAIL for real invitation email delivery.
+- The current upload signature check verifies file headers, not full PDF/image parsing or DOCX/XLSX archive contents. Files are downloaded as attachments and are not rendered inline. Add malware scanning and archive expansion limits before accepting untrusted files at larger scale.
+- A Content-Security-Policy is not enabled yet. Add a nonce-based policy compatible with the deployed Next.js/Auth.js runtime and verify it against the production build before enforcement.
+- HSTS is emitted only in production; enable it only when the production domain and all subdomains are HTTPS-ready.
+- CI validates against disposable PostgreSQL and local test storage; it does not prove production S3, email, DNS, or hosting secrets are configured.
+
+## Release checklist
+
+- [ ] AUTH_SECRET is unique and at least 32 characters.
+- [ ] AUTH_URL and NEXT_PUBLIC_APP_URL use the canonical HTTPS domain.
+- [ ] S3 bucket is private, encrypted, and least-privilege.
+- [ ] Resend sender domain is verified and delivery is tested.
+- [ ] Production database backups and restore procedure are verified.
+- [ ] Malware scanning and archive inspection are enabled if required by the threat model.
+- [ ] CSP is tested and enforced after nonce integration.

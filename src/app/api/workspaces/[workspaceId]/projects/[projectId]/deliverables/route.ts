@@ -25,7 +25,14 @@ export async function POST(
     const { user } = await requireRole(workspaceId, ["OWNER", "ADMIN", "MEMBER"]);
     const allowed = await consumeRateLimit(`upload:${workspaceId}:${user.id}`, 20, 60 * 60);
     if (!allowed) return NextResponse.json({ error: "Upload rate limit reached. Try again later." }, { status: 429 });
-    const contentLength = Number(request.headers.get("content-length") ?? 0);
+    const contentLengthHeader = request.headers.get("content-length");
+    if (!contentLengthHeader || !/^\\d+$/.test(contentLengthHeader)) {
+      return NextResponse.json({ error: "A valid Content-Length is required for uploads." }, { status: 411 });
+    }
+    const contentLength = Number(contentLengthHeader);
+    if (!Number.isSafeInteger(contentLength) || contentLength <= 0) {
+      return NextResponse.json({ error: "Invalid upload request size." }, { status: 400 });
+    }
     if (contentLength > MAX_FILE_SIZE + 256 * 1024) {
       return NextResponse.json({ error: "Upload request exceeds the 4 MB file limit." }, { status: 413 });
     }
