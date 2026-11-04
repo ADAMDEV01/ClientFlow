@@ -56,7 +56,7 @@ export async function removeWorkspaceMemberAction(workspaceId: string, input: un
 
 export type ProjectManagementFormState = { error?: string; success?: string };
 
-export async function createProjectProjectManagementFormAction(_prev: ProjectManagementFormState, fd: FormData): Promise<ProjectManagementFormState> {
+export async function createProjectFormAction(_prev: ProjectManagementFormState, fd: FormData): Promise<ProjectManagementFormState> {
   const workspaceId = String(fd.get("workspaceId") ?? "");
   const result = await saveProjectAction(workspaceId, {
     name: fd.get("name"), description: fd.get("description") || undefined, clientId: fd.get("clientId"),
@@ -65,7 +65,7 @@ export async function createProjectProjectManagementFormAction(_prev: ProjectMan
   });
   return result.ok ? { success: "Project created." } : { error: result.error.message };
 }
-export async function createTaskProjectManagementFormAction(_prev: ProjectManagementFormState, fd: FormData): Promise<ProjectManagementFormState> {
+export async function createTaskFormAction(_prev: ProjectManagementFormState, fd: FormData): Promise<ProjectManagementFormState> {
   const workspaceId = String(fd.get("workspaceId") ?? "");
   const result = await saveTaskAction(workspaceId, {
     projectId: fd.get("projectId"), title: fd.get("title"), description: fd.get("description") || undefined,
@@ -74,7 +74,7 @@ export async function createTaskProjectManagementFormAction(_prev: ProjectManage
   });
   return result.ok ? { success: "Task created." } : { error: result.error.message };
 }
-export async function createMilestoneProjectManagementFormAction(_prev: ProjectManagementFormState, fd: FormData): Promise<ProjectManagementFormState> {
+export async function createMilestoneFormAction(_prev: ProjectManagementFormState, fd: FormData): Promise<ProjectManagementFormState> {
   const workspaceId = String(fd.get("workspaceId") ?? "");
   const position = fd.get("position");
   const result = await saveMilestoneAction(workspaceId, {
