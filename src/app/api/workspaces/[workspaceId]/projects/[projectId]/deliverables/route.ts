@@ -39,8 +39,29 @@ export async function POST(
     }
 
     const safeDisplayName = file.name.replace(/[\\/\r\n\0]/g, "_").slice(0, 255) || "download";
+    const extension = safeDisplayName.split(".").pop()?.toLowerCase();
+    const expectedExtension = file.type === "application/pdf" ? "pdf"
+      : file.type === "image/png" ? "png"
+      : file.type === "image/jpeg" ? "jpg"
+      : file.type === "image/webp" ? "webp"
+      : file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ? "docx"
+      : file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ? "xlsx"
+      : "";
+    if (!expectedExtension || (extension !== expectedExtension && !(file.type === "image/jpeg" && extension === "jpeg"))) {
+      return NextResponse.json({ error: "The file extension does not match its type." }, { status: 415 });
+    }
     const key = `${workspaceId}/${projectId}/${randomUUID()}`;
     const bytes = new Uint8Array(await file.arrayBuffer());
+    const signature = Buffer.from(bytes.subarray(0, 12)).toString("hex");
+    const validSignature = file.type === "application/pdf" ? signature.startsWith("255044462d")
+      : file.type === "image/png" ? signature.startsWith("89504e470d0a1a0a")
+      : file.type === "image/jpeg" ? signature.startsWith("ffd8ff")
+      : file.type === "image/webp" ? signature.startsWith("52494646") && signature.slice(16, 24) === "57454250"
+      : file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ? signature.startsWith("504b0304")
+      : false;
+    if (!validSignature) {
+      return NextResponse.json({ error: "The file content does not match its declared type." }, { status: 415 });
+    }
     const storage = getStorageProvider();
 
     await storage.put({ key, contentType: file.type, bytes });

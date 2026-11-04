@@ -222,12 +222,13 @@ export async function attachFileToDeliverable(
         projectId,
         status: "DRAFT",
       },
-      select: { id: true },
+      select: { id: true, fileKey: true },
     });
     if (!draft) throw new Error("Only a draft in this project can receive an upload.");
+    if (draft.fileKey) throw new Error("This draft already has a file. Create a new version to replace it.");
 
     const updated = await tx.deliverable.updateMany({
-      where: { id: deliverableId, workspaceId, projectId, status: "DRAFT" },
+      where: { id: deliverableId, workspaceId, projectId, status: "DRAFT", fileKey: null },
       data: {
         fileKey: file.fileKey,
         fileName: file.fileName,

@@ -21,7 +21,7 @@ export function UploadDeliverableForm({ workspaceId, projectId, deliverableId }:
       });
       const result = await response.json() as { error?: string };
       if (!response.ok) throw new Error(result.error ?? "Upload failed.");
-      setMessage("File uploaded as a new draft deliverable.");
+      setMessage(deliverableId ? "File attached to the new version." : "File uploaded as a new draft deliverable.");
       formRef.current?.reset();
       router.refresh();
     } catch (error) {
