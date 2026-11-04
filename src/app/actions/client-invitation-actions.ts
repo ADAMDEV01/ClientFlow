@@ -19,12 +19,12 @@ export async function createClientPortalInvitationAction(workspaceId: string, in
   }
 }
 
-export type ClientInvitationFormState = { error?: string; invitationUrl?: string; expiresAt?: string };
+export type ClientInvitationFormState = { error?: string; invitationUrl?: string; expiresAt?: string; emailSent?: boolean };
 export async function createClientPortalInvitationFormAction(_previous: ClientInvitationFormState, formData: FormData): Promise<ClientInvitationFormState> {
   const workspaceId = String(formData.get("workspaceId") ?? "");
   const result = await createClientPortalInvitationAction(workspaceId, { clientId: formData.get("clientId") });
   if (!result.ok) return { error: result.error.message };
-  return { invitationUrl: result.data.invitationUrl, expiresAt: result.data.expiresAt.toLocaleDateString() };
+  return { invitationUrl: result.data.invitationUrl, expiresAt: result.data.expiresAt.toLocaleDateString(), emailSent: result.data.emailSent };
 }
 
 export type AcceptClientInvitationState = { error?: string };
