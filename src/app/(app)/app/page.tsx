@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { auth } from "@/auth";
 import { getPrisma } from "@/lib/prisma";
 import { WorkspaceForm } from "@/app/components/workspace-form";
+import { DashboardStats, DashboardStatsFallback } from "@/app/components/dashboard-stats";
 import { logoutAction } from "@/app/actions/auth-actions";
 
 export default async function AppHomePage() {
@@ -49,6 +51,9 @@ export default async function AppHomePage() {
         <div><p className="text-sm font-bold tracking-wide text-indigo-600">CLIENTFLOW</p><h1 className="mt-2 text-2xl font-semibold">{workspace.name}</h1><p className="text-sm text-slate-500">{membership.role.toLowerCase()} workspace</p></div>
         <form action={logoutAction}><button className="rounded-lg border border-slate-300 px-4 py-2 text-sm dark:border-slate-700">Sign out</button></form>
       </header>
+      <Suspense fallback={<DashboardStatsFallback />}>
+        <DashboardStats workspaceId={workspace.id} />
+      </Suspense>
       <section className="mt-8 grid gap-4 sm:grid-cols-3">
         {[
           { label: "Projects", value: workspace._count.projects },
