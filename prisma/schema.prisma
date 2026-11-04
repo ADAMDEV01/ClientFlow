@@ -252,12 +252,12 @@ model Review {
   workspaceId String
   deliverableId String
   clientId String
-  reviewerId String
+  reviewerId String?
   version Int
   decision ReviewDecision
   feedback String?
   createdAt DateTime @default(now())
-  reviewer User @relation(fields: [reviewerId], references: [id], onDelete: Restrict)
+  reviewer User? @relation(fields: [reviewerId], references: [id], onDelete: SetNull)
   deliverable Deliverable @relation(fields: [deliverableId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
   client Client @relation(fields: [clientId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
   @@index([workspaceId, deliverableId, createdAt])

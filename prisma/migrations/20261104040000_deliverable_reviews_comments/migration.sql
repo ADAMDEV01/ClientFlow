@@ -3,7 +3,6 @@ ALTER TABLE "Review" ADD COLUMN "version" INTEGER;
 UPDATE "Review" r SET "reviewerId" = c."userId", "version" = d."version"
 FROM "Client" c, "Deliverable" d
 WHERE r."clientId" = c."id" AND r."deliverableId" = d."id";
-ALTER TABLE "Review" ALTER COLUMN "reviewerId" SET NOT NULL;
 ALTER TABLE "Review" ALTER COLUMN "version" SET NOT NULL;
 ALTER TABLE "Review" ADD CONSTRAINT "Review_reviewerId_fkey"
   FOREIGN KEY ("reviewerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
