@@ -3,7 +3,6 @@
 import { randomUUID } from "node:crypto";
 import argon2 from "argon2";
 import { AuthError } from "next-auth";
-import { redirect } from "next/navigation";
 import { signIn, signOut } from "@/auth";
 import { getPrisma } from "@/lib/prisma";
 import { loginSchema, registerSchema } from "@/lib/validations/auth";
