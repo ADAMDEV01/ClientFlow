@@ -15,6 +15,32 @@ ClientFlow is a multi-tenant client and project management SaaS for freelancers 
 - Vercel deployment target with Neon PostgreSQL
 - Local private file storage in development; S3-compatible private object storage in production
 
+## Demo access
+
+The seed script creates an OWNER account and a linked CLIENT portal account. In a seeded demo environment, use:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Owner | `owner@clientflow.local` | `ClientFlowDemo!2026` |
+| Client | `client@clientflow.local` | `ClientFlowDemo!2026` |
+
+**Public demo warning:** this is shared demo data, not a private workspace. Other visitors can create, edit, or delete demo records. The demo database may be reset without notice. Never upload confidential files or reuse these credentials elsewhere. Set `SEED_DEMO_PASSWORD` to override the seed password.
+
+## Architecture
+
+```mermaid
+flowchart TD
+  Browser[Owner / Team / Client browser] --> Next[Next.js App Router on Vercel]
+  Next --> Auth[Auth.js JWT + role authorization]
+  Next --> Actions[Server Actions and Route Handlers]
+  Actions --> Validate[Zod validation]
+  Validate --> Services[Domain services and state machines]
+  Services --> Prisma[Prisma ORM]
+  Prisma --> Neon[(Neon PostgreSQL)]
+  Services --> Storage[Private S3 / R2 object storage]
+  Services --> Mail[Resend invitation email]
+```
+
 ## Local setup
 
 Requirements: Node.js 22+, npm, and Docker Desktop / Docker Engine.
@@ -28,7 +54,7 @@ Requirements: Node.js 22+, npm, and Docker Desktop / Docker Engine.
 2. Install dependencies:
 
    ```bash
-   npm install
+   npm ci
    ```
 
 3. Create `.env`:
@@ -109,7 +135,14 @@ npm run test:e2e
 npm run build
 ```
 
-GitHub Actions runs Prisma Client generation, lint, type checking, unit tests, production build, and Playwright E2E checks.
+GitHub Actions runs three independent jobs: quality/build, PostgreSQL integration tests, and Playwright E2E. The quality job also checks Prettier formatting with `npm run format:check`.
+
+## Design decisions
+
+- **Explicit state machine:** deliverable review transitions are constrained to valid states, and reviewed versions remain immutable. This prevents clients and team members from applying conflicting or invalid decisions.
+- **PostgreSQL rate limiting:** fixed-window counters are updated atomically in the shared database, so multiple Vercel instances use the same limits instead of independent in-memory counters.
+- **Optimistic revision checks:** a review decision includes the expected revision in its conditional update. Only one concurrent decision can update that revision; a stale request is rejected rather than overwriting a newer state.
+- **Tenant-scoped relational constraints:** workspace identifiers are included in relevant foreign keys and queries to reduce the risk of cross-workspace references.
 
 ## Database commands
 
