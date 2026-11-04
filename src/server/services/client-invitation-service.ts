@@ -12,7 +12,7 @@ function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 function invitationUrl(token: string) {
-  const base = process.env.AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? process.env.AUTH_URL ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
   return new URL(`/client-invite/${token}`, base).toString();
 }
 
@@ -85,6 +85,8 @@ export async function acceptClientPortalInvitation(userId: string, userEmail: st
     if (!invitation || invitation.email !== userEmail.trim().toLowerCase()) throw new Error("Invitation is invalid, expired, or belongs to another email.");
     const client = await tx.client.findFirst({ where: { id: invitation.clientId, workspaceId: invitation.workspaceId }, select: { id: true, email: true, userId: true } });
     if (!client || client.email.toLowerCase() !== invitation.email.toLowerCase() || (client.userId && client.userId !== userId)) throw new Error("This client is already linked to another account.");
+    const otherProfile = await tx.client.findFirst({ where: { userId, NOT: { id: client.id } }, select: { id: true } });
+    if (otherProfile) throw new Error("This account is already linked to another client portal.");
     const consumed = await tx.clientInvitation.updateMany({ where: { id: invitation.id, status: "PENDING", expiresAt: { gt: new Date() } }, data: { status: "ACCEPTED", acceptedAt: new Date() } });
     if (consumed.count !== 1) throw new Error("Invitation has already been used.");
     if (!client.userId) {

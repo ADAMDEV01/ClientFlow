@@ -29,7 +29,7 @@ export default async function ClientPortalPage({
       <section className="mt-9">
         <h2 className="text-xl font-semibold">Milestones</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {project.milestones.map((milestone) => <article key={milestone.id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-800"><h3 className="font-medium">{milestone.name}</h3><p className="mt-2 text-sm text-slate-500">{milestone.completedAt ? "Completed" : milestone.dueDate ? `Due ${milestone.dueDate.toLocaleDateString()}` : "In progress"}</p></article>)}
+          {project.milestones.map((milestone) => <article key={milestone.id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-800"><h3 className="font-medium">{milestone.name}</h3><p className="mt-2 text-sm text-slate-500">{milestone.status.toLowerCase().replace("_", " ")}{milestone.dueDate ? ` · Due ${milestone.dueDate.toLocaleDateString()}` : ""}</p></article>)}
           {!project.milestones.length ? <p className="text-sm text-slate-500">No milestones have been shared yet.</p> : null}
         </div>
       </section>

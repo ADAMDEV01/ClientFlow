@@ -2,7 +2,7 @@
 
 import { requireRole } from "@/server/authz";
 import { actionFailure, actionSuccess, type ActionResult } from "@/server/action-result";
-import { createClient, createMilestone, createProject, createTask, updateTaskStatus, linkClientPortalAccount } from "@/server/services/project-service";
+import { createClient, createMilestone, createProject, createTask, updateTaskStatus } from "@/server/services/project-service";
 
 function failure(error: unknown) {
   return actionFailure(
@@ -128,32 +128,6 @@ export async function updateTaskStatusAction(
   } catch (error) {
     return failure(error);
   }
-}
-
-export async function linkClientPortalAccountAction(
-  workspaceId: string,
-  clientId: string,
-  email: string,
-): Promise<ActionResult<{ clientId: string; linked: boolean }>> {
-  try {
-    const { user } = await requireRole(workspaceId, ["OWNER", "ADMIN"]);
-    return actionSuccess(await linkClientPortalAccount(workspaceId, user.id, clientId, email));
-  } catch (error) {
-    return failure(error);
-  }
-}
-
-export type LinkPortalFormState = { error?: string; success?: string };
-
-export async function linkClientPortalFormAction(
-  _previousState: LinkPortalFormState,
-  formData: FormData,
-): Promise<LinkPortalFormState> {
-  const workspaceId = String(formData.get("workspaceId") ?? "");
-  const clientId = String(formData.get("clientId") ?? "");
-  const email = String(formData.get("email") ?? "");
-  const result = await linkClientPortalAccountAction(workspaceId, clientId, email);
-  return result.ok ? { success: "Portal account linked." } : { error: result.error.message };
 }
 
 export type TaskStatusFormState = { error?: string; success?: string };

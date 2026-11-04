@@ -5,7 +5,7 @@ import { getClientPortalProjects } from "@/server/queries/client-portal";
 
 export default async function ClientPortalHome() {
   const session = await auth();
-  if (!session?.user?.id || session.user.role !== "CLIENT" || !session.user.clientId) redirect("/login");
+  if (!session?.user?.id || session.user.role !== "CLIENT" || !session.user.clientId || !session.user.workspaceId) redirect("/login");
   const projects = await getClientPortalProjects();
   return <main className="mx-auto max-w-5xl px-6 py-10">
     <p className="text-sm font-semibold text-indigo-600">CLIENT PORTAL</p>
