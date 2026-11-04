@@ -58,7 +58,11 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (workspaceId) await prisma.workspace.delete({ where: { id: workspaceId } });
+  // Reviews restrict deletion of their Client, so remove them before cascading the workspace.
+  if (workspaceId && clientId) {
+    await prisma.review.deleteMany({ where: { workspaceId, clientId } });
+    await prisma.workspace.delete({ where: { id: workspaceId } });
+  }
   await prisma.user.deleteMany({ where: { id: { in: [ownerId, clientUserId].filter(Boolean) } } });
   await prisma.$disconnect();
 });
