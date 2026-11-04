@@ -81,7 +81,7 @@ export function MilestoneRecordControls({ workspaceId, milestone }: { workspaceI
   </form><button disabled={pending} onClick={() => { if (confirm("Delete this milestone? It must not have tasks.")) execute(() => deleteMilestoneAction(workspaceId, milestone.id)); }} className="mt-2 text-red-600">Delete</button>{message ? <p role="status" className="mt-2 text-slate-500">{message}</p> : null}</details>;
 }
 
-export function TaskRecordControls({ workspaceId, task, projectId, members }: { workspaceId: string; projectId: string; task: { id: string; title: string; description: string | null; status: "TODO" | "IN_PROGRESS" | "DONE"; priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT"; visibleToClient: boolean; dueDate: Date | null; assigneeId: string | null }; members: Member[] }) {
+export function TaskRecordControls({ workspaceId, task, projectId, members }: { workspaceId: string; projectId: string; task: { id: string; title: string; description: string | null; status: "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE"; priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT"; visibleToClient: boolean; dueDate: Date | null; assigneeId: string | null }; members: Member[] }) {
   const { pending, message, execute } = useRecordAction();
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault(); const fd = new FormData(e.currentTarget);
@@ -92,7 +92,7 @@ export function TaskRecordControls({ workspaceId, task, projectId, members }: { 
     <textarea className={field} name="description" defaultValue={task.description ?? ""} />
     <select className={field} name="assigneeId" defaultValue={task.assigneeId ?? ""}><option value="">Unassigned</option>{members.map(m => <option key={m.userId} value={m.userId}>{m.name ?? m.email}</option>)}</select>
     <select className={field} name="priority" defaultValue={task.priority}><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option><option value="URGENT">Urgent</option></select>
-    <select className={field} name="status" defaultValue={task.status}><option value="TODO">To do</option><option value="IN_PROGRESS">In progress</option><option value="DONE">Done</option></select>
+    <select className={field} name="status" defaultValue={task.status}><option value="TODO">To do</option><option value="IN_PROGRESS">In progress</option><option value="IN_REVIEW">In review</option><option value="DONE">Done</option></select>
     <input className={field} type="date" name="dueDate" defaultValue={task.dueDate?.toISOString().slice(0,10) ?? ""} />
     <label className="flex items-center gap-2"><input type="checkbox" name="visibleToClient" defaultChecked={task.visibleToClient} /> Visible to client</label>
     <button disabled={pending} className="rounded-lg bg-indigo-600 px-3 py-2 text-white">Save task</button>

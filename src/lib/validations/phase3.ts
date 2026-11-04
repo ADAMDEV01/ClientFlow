@@ -40,7 +40,7 @@ export const taskInputSchema = z.object({
   description: z.string().trim().max(5000).optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).default("MEDIUM"),
   dueDate: optionalDate,
-  status: z.enum(["TODO", "IN_PROGRESS", "DONE"]).default("TODO"),
+  status: z.enum(["TODO", "IN_PROGRESS", "IN_REVIEW", "DONE"]).default("TODO"),
   visibleToClient: z.boolean().default(false),
 });
 
