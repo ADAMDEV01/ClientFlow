@@ -5,6 +5,7 @@ const { authMock, getPrismaMock } = vi.hoisted(() => ({
   getPrismaMock: vi.fn(),
 }));
 
+vi.mock("server-only", () => ({}));
 vi.mock("@/auth", () => ({ auth: authMock }));
 vi.mock("@/lib/prisma", () => ({ getPrisma: getPrismaMock }));
 
