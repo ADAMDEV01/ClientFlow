@@ -84,6 +84,7 @@ model User {
   assignedTasks Task[] @relation("TaskAssignee")
   activities Activity[]
   sentInvitations Invitation[] @relation("InvitationSender")
+  sentClientInvitations ClientInvitation[] @relation("ClientInvitationSender")
   @@index([email])
   @@index([activeWorkspaceId])
 }
@@ -102,6 +103,7 @@ model Workspace {
   projects Project[]
   activities Activity[]
   invitations Invitation[]
+  clientInvitations ClientInvitation[]
   @@index([ownerId])
 }
 
@@ -134,6 +136,7 @@ model Client {
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
   projects Project[]
   reviews Review[]
+  invitations ClientInvitation[]
   @@unique([id, workspaceId])
   @@unique([workspaceId, email])
   @@index([workspaceId, createdAt])
@@ -294,4 +297,24 @@ model RateLimitBucket {
   resetAt DateTime
   updatedAt DateTime @updatedAt
   @@index([resetAt])
+}
+
+
+model ClientInvitation {
+  id String @id @default(cuid())
+  workspaceId String
+  clientId String
+  email String
+  tokenHash String @unique
+  status InvitationStatus @default(PENDING)
+  expiresAt DateTime
+  invitedById String
+  acceptedAt DateTime?
+  createdAt DateTime @default(now())
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client Client @relation(fields: [clientId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  invitedBy User @relation("ClientInvitationSender", fields: [invitedById], references: [id], onDelete: Restrict)
+  @@unique([workspaceId, clientId])
+  @@index([workspaceId, status, expiresAt])
+  @@index([email])
 }
