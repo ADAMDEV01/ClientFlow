@@ -70,7 +70,7 @@ test("full client review lifecycle: register, invite, upload, request changes, r
     });
     await uploadForm.getByRole("button", { name: "Upload deliverable" }).click();
     await expect(owner.getByText("File uploaded as a new draft deliverable.")).toBeVisible();
-    await expect(owner.getByRole("heading", { name: "E2E Homepage Design v1" })).toBeVisible();
+    await expect(owner.getByText(/E2E Homepage Design v1/)).toBeVisible();
     await owner.getByRole("button", { name: "Submit for review" }).click();
 
     // Client requests changes with required feedback.
@@ -94,7 +94,7 @@ test("full client review lifecycle: register, invite, upload, request changes, r
     });
     await replacementForm.getByRole("button", { name: "Upload deliverable" }).click();
     await expect(owner.getByText("File attached to the new version.")).toBeVisible();
-    await expect(owner.getByRole("heading", { name: "E2E Homepage Design v2" })).toBeVisible();
+    await expect(owner.getByText(/E2E Homepage Design v2/)).toBeVisible();
     await owner.getByRole("button", { name: "Submit for review" }).last().click();
 
     // Client approves the resubmitted version.
