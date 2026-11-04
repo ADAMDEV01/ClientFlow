@@ -55,7 +55,7 @@ export default async function ClientPortalPage({
                 <button className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold dark:border-slate-700">Post comment</button>
               </form>
             </div>
-            {item.reviews.map(review => <div key={review.id} className="mt-3 rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-800"><p className="font-medium">{review.decision.replace("_", " ")} · v{review.version}</p>{review.feedback ? <p className="mt-1 text-slate-600 dark:text-slate-300">{review.feedback}</p> : null}<p className="mt-1 text-xs text-slate-500">{review.reviewer.name ?? "Reviewer"} · {review.createdAt.toLocaleString()}</p></div>)}
+            {item.reviews.map(review => <div key={review.id} className="mt-3 rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-800"><p className="font-medium">{review.decision.replace("_", " ")} · v{review.version}</p>{review.feedback ? <p className="mt-1 text-slate-600 dark:text-slate-300">{review.feedback}</p> : null}<p className="mt-1 text-xs text-slate-500">{review.reviewer?.name ?? "Reviewer"} · {review.createdAt.toLocaleString()}</p></div>)}
             {item.status === "SUBMITTED" ? <form action={submitClientReviewAction} className="mt-5 space-y-3 border-t border-slate-200 pt-4 dark:border-slate-800">
               <input type="hidden" name="workspaceId" value={project.workspaceId} />
               <input type="hidden" name="deliverableId" value={item.id} />
