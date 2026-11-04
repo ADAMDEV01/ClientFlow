@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { getPrisma } from "@/lib/prisma";
 import { requireWorkspaceMember } from "@/server/authz";
 import { getWorkspaceActivity, getWorkspaceActivityOptions } from "@/server/queries/analytics";
 import type { ActivityAction } from "@/generated/prisma/client";
