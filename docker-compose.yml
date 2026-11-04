@@ -17,5 +17,29 @@ services:
       timeout: 5s
       retries: 10
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clientflow-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://clientflow:clientflow_dev_password@postgres:5432/clientflow?schema=public
+      AUTH_SECRET: ClientFlowLocalDockerSecret-Change-Me-123456
+      AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      CLIENTFLOW_LOCAL_STORAGE_DIR: /app/.clientflow-storage
+      SEED_DEMO_PASSWORD: ClientFlowDemo!2026
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - clientflow_uploads:/app/.clientflow-storage
+
 volumes:
   clientflow_postgres_data:
+  clientflow_uploads:

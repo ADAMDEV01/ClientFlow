@@ -26,6 +26,16 @@ The seed script creates an OWNER account and a linked CLIENT portal account. In 
 
 **Public demo warning:** this is shared demo data, not a private workspace. Other visitors can create, edit, or delete demo records. The demo database may be reset without notice. Never upload confidential files or reuse these credentials elsewhere. Set `SEED_DEMO_PASSWORD` to override the seed password.
 
+## One-command local demo
+
+Start PostgreSQL and the Next.js app, apply migrations, and seed the Owner/Client demo accounts:
+
+```bash
+docker compose up --build
+```
+
+Then open [http://localhost:3000](http://localhost:3000). The Compose setup uses local file storage and a disposable PostgreSQL volume; it is for local development/demo only, not production. Use `docker compose down -v` to remove the local database and uploaded demo files.
+
 ## Architecture
 
 ```mermaid
