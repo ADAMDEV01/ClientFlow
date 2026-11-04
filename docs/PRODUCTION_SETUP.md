@@ -17,13 +17,13 @@ Only run `db:deploy` when the preflight reports `PASSED`. If it reports duplicat
 
 ## 2. Private file storage (required)
 
-Production uses the AWS S3 SDK. Configure a private S3 bucket (or an S3-compatible provider such as Cloudflare R2) and add these Production environment variables:
+Production uses the AWS S3 SDK. Configure a private AWS S3 bucket, or an S3-compatible provider that supports the S3 `ServerSideEncryption: AES256` request used by this application. Add these Production environment variables:
 
 - `S3_BUCKET`: bucket name.
-- `S3_REGION`: bucket region (for Cloudflare R2, use `auto`).
+- `S3_REGION`: bucket region.
 - `S3_ACCESS_KEY_ID`: access key with access only to this bucket.
 - `S3_SECRET_ACCESS_KEY`: matching secret key.
-- `S3_ENDPOINT`: optional for AWS S3; for Cloudflare R2 use `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`.
+- `S3_ENDPOINT`: optional for AWS S3; set this only when using a compatible provider endpoint that supports the required SSE-S3 header.
 
 Keep the bucket private; ClientFlow authorizes downloads in the application before retrieving objects. Do not enable public object access. The application uses server-side encryption on S3 uploads. After setting the variables, redeploy and test an upload and authorized download, then verify that a different workspace cannot download the object.
 
