@@ -45,6 +45,7 @@ class LocalStorageProvider implements StorageProvider {
 class S3StorageProvider implements StorageProvider {
   private readonly bucket: string;
   private readonly client: S3Client;
+  private readonly serverSideEncryption: "AES256" | undefined;
 
   constructor() {
     const env = getServerEnv();
@@ -52,6 +53,7 @@ class S3StorageProvider implements StorageProvider {
       throw new Error("S3 storage is not fully configured.");
     }
     this.bucket = env.S3_BUCKET;
+    this.serverSideEncryption = env.S3_SERVER_SIDE_ENCRYPTION === "NONE" ? undefined : "AES256";
     this.client = new S3Client({
       region: env.S3_REGION,
       endpoint: env.S3_ENDPOINT,
@@ -69,7 +71,9 @@ class S3StorageProvider implements StorageProvider {
       Key: safeKey(object.key),
       Body: object.bytes,
       ContentType: object.contentType,
-      ServerSideEncryption: "AES256",
+      ...(this.serverSideEncryption
+        ? { ServerSideEncryption: this.serverSideEncryption }
+        : {}),
     }));
   }
 
