@@ -83,6 +83,8 @@ model User {
   projectMemberships ProjectMember[]
   assignedTasks Task[] @relation("TaskAssignee")
   activities Activity[]
+  reviews Review[]
+  deliverableComments DeliverableComment[]
   sentInvitations Invitation[] @relation("InvitationSender")
   sentClientInvitations ClientInvitation[] @relation("ClientInvitationSender")
   @@index([email])
@@ -239,6 +241,7 @@ model Deliverable {
   updatedAt DateTime @updatedAt
   project Project @relation(fields: [projectId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
   reviews Review[]
+  comments DeliverableComment[]
   @@unique([id, workspaceId])
   @@unique([projectId, name, version])
   @@index([workspaceId, projectId, status, updatedAt])
@@ -249,13 +252,31 @@ model Review {
   workspaceId String
   deliverableId String
   clientId String
+  reviewerId String
+  version Int
   decision ReviewDecision
   feedback String?
   createdAt DateTime @default(now())
+  reviewer User @relation(fields: [reviewerId], references: [id], onDelete: Restrict)
   deliverable Deliverable @relation(fields: [deliverableId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
   client Client @relation(fields: [clientId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
   @@index([workspaceId, deliverableId, createdAt])
   @@index([workspaceId, clientId, createdAt])
+  @@index([reviewerId, createdAt])
+}
+
+model DeliverableComment {
+  id String @id @default(cuid())
+  workspaceId String
+  deliverableId String
+  authorId String
+  version Int
+  body String @db.VarChar(4000)
+  createdAt DateTime @default(now())
+  deliverable Deliverable @relation(fields: [deliverableId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  @@index([workspaceId, deliverableId, createdAt])
+  @@index([authorId, createdAt])
 }
 
 model Activity {

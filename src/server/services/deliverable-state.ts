@@ -1,27 +1,20 @@
 import type { DeliverableStatus } from "@/generated/prisma/client";
 
+export type DeliverableEvent = "SUBMIT" | "APPROVE" | "REQUEST_CHANGES";
 export type DeliverableTransition =
   | { ok: true; nextStatus: DeliverableStatus }
   | { ok: false; reason: string };
 
-export function transitionDeliverable(
-  current: DeliverableStatus,
-  requested: "SUBMITTED" | "APPROVED" | "CHANGES_REQUESTED",
-): DeliverableTransition {
-  if (current === "DRAFT" && requested === "SUBMITTED") {
-    return { ok: true, nextStatus: "SUBMITTED" };
-  }
+const transitions: Record<DeliverableStatus, Partial<Record<DeliverableEvent, DeliverableStatus>>> = {
+  DRAFT: { SUBMIT: "SUBMITTED" },
+  SUBMITTED: { APPROVE: "APPROVED", REQUEST_CHANGES: "CHANGES_REQUESTED" },
+  APPROVED: {},
+  CHANGES_REQUESTED: {},
+};
 
-  if (current === "SUBMITTED" && requested === "APPROVED") {
-    return { ok: true, nextStatus: "APPROVED" };
-  }
-
-  if (current === "SUBMITTED" && requested === "CHANGES_REQUESTED") {
-    return { ok: true, nextStatus: "CHANGES_REQUESTED" };
-  }
-
-  return {
-    ok: false,
-    reason: `Cannot move a deliverable from ${current} to ${requested}.`,
-  };
+export function transitionDeliverable(current: DeliverableStatus, event: DeliverableEvent): DeliverableTransition {
+  const nextStatus = transitions[current][event];
+  return nextStatus
+    ? { ok: true, nextStatus }
+    : { ok: false, reason: `Event ${event} is not allowed while deliverable is ${current}.` };
 }
