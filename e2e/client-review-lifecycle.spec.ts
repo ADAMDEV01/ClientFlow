@@ -55,7 +55,7 @@ test("full client review lifecycle: register, invite, upload, request changes, r
     await client.getByLabel("Password").fill(password);
     await client.getByRole("button", { name: "Sign in" }).click();
     await expect(client).toHaveURL(/\/portal/);
-    await expect(client.getByText("E2E Website Project")).toBeVisible();
+    await expect(client.getByRole("link", { name: /E2E Website Project/ })).toBeVisible();
 
     // Team uploads a real PDF and submits the deliverable for review.
     await owner.goto("/app/projects");
@@ -73,7 +73,7 @@ test("full client review lifecycle: register, invite, upload, request changes, r
 
     // Client requests changes with required feedback.
     await client.goto("/portal");
-    await client.getByText("E2E Website Project").click();
+    await client.getByRole("link", { name: /E2E Website Project/ }).click();
     await expect(client.getByText("E2E Homepage Design")).toBeVisible();
     await client.getByLabel("Feedback (required when requesting changes)").fill("Please adjust the hero spacing and heading hierarchy.");
     await client.getByRole("button", { name: "Request changes" }).click();
@@ -95,7 +95,7 @@ test("full client review lifecycle: register, invite, upload, request changes, r
 
     // Client approves the resubmitted version.
     await client.goto("/portal");
-    await client.getByText("E2E Website Project").click();
+    await client.getByRole("link", { name: /E2E Website Project/ }).click();
     await expect(client.getByText("E2E Homepage Design")).toBeVisible();
     await client.getByRole("button", { name: "Approve" }).last().click();
     await expect(client.getByText("approved", { exact: false }).first()).toBeVisible();
