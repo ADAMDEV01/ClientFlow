@@ -6,7 +6,7 @@ vi.mock("@/auth", () => ({ auth: authMock }));
 vi.mock("@/server/services/notification", () => ({ notifyDeliverable: vi.fn().mockResolvedValue(undefined) }));
 
 import { getPrisma } from "@/lib/prisma";
-import { AuthzError, requireClientProjectAccess, requireRole, requireWorkspaceMember } from "@/server/authz";
+import { AuthzError, requireClientProjectAccess, requireRole, requireWorkspaceMember, type TeamRole } from "@/server/authz";
 import { submitDeliverable } from "@/server/services/deliverable-service";
 
 const prisma = getPrisma();
@@ -78,10 +78,11 @@ describe("database-backed authorization matrix", () => {
   });
 
   it.each(actions)("$name enforces every team role", async ({ allowed }) => {
+    const permittedRoles = allowed as readonly TeamRole[];
     for (const role of ["OWNER", "ADMIN", "MEMBER"] as const) {
       const userId = role === "OWNER" ? ids.owner : role === "ADMIN" ? ids.admin : ids.member;
       await asUser(userId, role);
-      if (allowed.includes(role)) {
+      if (permittedRoles.includes(role)) {
         await expect(requireRole(ids.workspace, allowed)).resolves.toMatchObject({ membership: { role } });
       } else {
         await expect(requireRole(ids.workspace, allowed)).rejects.toMatchObject({ code: "ROLE_FORBIDDEN" });
