@@ -207,9 +207,15 @@ describe("server action authorization matrix", () => {
     const result = await deleteProjectAction(workspaceId, project.id);
     const allowed = role === "OWNER" || role === "ADMIN";
     expect(result.ok).toBe(allowed);
-    expect(await prisma.project.findUnique({ where: { id: project.id }, select: { id: true } })).toBe(
-      allowed ? null : { id: project.id },
-    );
+    const remaining = await prisma.project.findUnique({
+      where: { id: project.id },
+      select: { id: true },
+    });
+    if (allowed) {
+      expect(remaining).toBeNull();
+    } else {
+      expect(remaining).toMatchObject({ id: project.id });
+    }
     if (!allowed) await prisma.project.delete({ where: { id: project.id } });
   });
 
