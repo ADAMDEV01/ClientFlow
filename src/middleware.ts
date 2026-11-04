@@ -1,5 +1,5 @@
 import NextAuth from "next-auth";
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { authConfig } from "@/auth.config";
 
 const { auth: withAuth } = NextAuth(authConfig);
@@ -25,7 +25,7 @@ function createCsp(nonce: string) {
   ].join("; ");
 }
 
-export default withAuth((request: NextRequest & { auth: { user?: { id?: string; role?: string | null } } | null }) => {
+export default withAuth((request) => {
   const nonce = createNonce();
   const contentSecurityPolicy = createCsp(nonce);
   const requestHeaders = new Headers(request.headers);
