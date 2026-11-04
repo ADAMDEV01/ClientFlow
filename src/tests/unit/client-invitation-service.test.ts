@@ -44,7 +44,7 @@ describe("client portal invitation security", () => {
   it("does not link the client if another request already consumed the token", async () => {
     const tx = {
       clientInvitation: { findFirst: vi.fn().mockResolvedValue(invitation), updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
-      client: { findFirst: vi.fn().mockResolvedValue({ id: "client-1", email: invitation.email, userId: null }), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+      client: { findFirst: vi.fn().mockResolvedValueOnce({ id: "client-1", email: invitation.email, userId: null }).mockResolvedValueOnce(null), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
     };
     getPrismaMock.mockReturnValue({ $transaction: (callback: (client: typeof tx) => Promise<unknown>) => callback(tx) });
     await expect(acceptClientPortalInvitation("user-1", invitation.email, token)).rejects.toThrow("already been used");
