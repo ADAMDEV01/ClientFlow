@@ -16,11 +16,13 @@ export async function consumeRateLimit(
   const resetAt = new Date(now.getTime() + windowSeconds * 1000);
 
   return prisma.$transaction(async (tx) => {
-    await tx.rateLimitBucket.upsert({
-      where: { key },
-      create: { key, count: 0, resetAt },
-      update: {},
-    });
+    // INSERT .. ON CONFLICT avoids the concurrent first-request race where
+    // two transactions both observe a missing key before either commits.
+    await tx.$executeRaw`
+      INSERT INTO "RateLimitBucket" ("key", "count", "resetAt", "updatedAt")
+      VALUES (${key}, 0, ${resetAt}, ${now})
+      ON CONFLICT ("key") DO NOTHING
+    `;
 
     await tx.rateLimitBucket.updateMany({
       where: { key, resetAt: { lte: now } },
