@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/server/authz";
 import { attachFileToDeliverable, createDeliverable } from "@/server/services/deliverable-service";
 import { getStorageProvider } from "@/server/storage";
+import { consumeRateLimit } from "@/server/services/rate-limit";
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024;
 const ALLOWED_TYPES = new Set([
@@ -22,6 +23,12 @@ export async function POST(
 
   try {
     const { user } = await requireRole(workspaceId, ["OWNER", "ADMIN", "MEMBER"]);
+    const allowed = await consumeRateLimit(`upload:${workspaceId}:${user.id}`, 20, 60 * 60);
+    if (!allowed) return NextResponse.json({ error: "Upload rate limit reached. Try again later." }, { status: 429 });
+    const contentLength = Number(request.headers.get("content-length") ?? 0);
+    if (contentLength > MAX_FILE_SIZE + 256 * 1024) {
+      return NextResponse.json({ error: "Upload request exceeds the 4 MB file limit." }, { status: 413 });
+    }
     const formData = await request.formData();
     const name = String(formData.get("name") ?? "");
     const description = String(formData.get("description") ?? "");
