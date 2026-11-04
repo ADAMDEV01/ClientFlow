@@ -3,6 +3,8 @@ import "server-only";
 import { getPrisma } from "@/lib/prisma";
 import { deliverableDecisionSchema } from "@/lib/validations/common";
 import { writeActivity } from "@/server/services/activity";
+import { transitionDeliverable } from "@/server/services/deliverable-state";
+import { notifyDeliverable } from "@/server/services/notification";
 
 export async function decideDeliverable(
   input: unknown,
@@ -12,7 +14,7 @@ export async function decideDeliverable(
   const data = deliverableDecisionSchema.parse(input);
   const prisma = getPrisma();
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const deliverable = await tx.deliverable.findFirst({
       where: {
         id: data.deliverableId,
@@ -26,6 +28,8 @@ export async function decideDeliverable(
     if (!deliverable) {
       throw new Error("This submitted deliverable is unavailable for review.");
     }
+    const transition = transitionDeliverable("SUBMITTED", data.decision === "APPROVED" ? "APPROVE" : "REQUEST_CHANGES");
+    if (!transition.ok) throw new Error(transition.reason);
 
     const update = await tx.deliverable.updateMany({
       where: {
@@ -50,6 +54,8 @@ export async function decideDeliverable(
         workspaceId: data.workspaceId,
         deliverableId: deliverable.id,
         clientId,
+        reviewerId: actorId,
+        version: deliverable.version,
         decision: data.decision,
         feedback: data.decision === "CHANGES_REQUESTED" ? data.feedback : null,
       },
@@ -67,8 +73,16 @@ export async function decideDeliverable(
       },
     });
 
-    return { id: deliverable.id, status: data.decision };
+    return { id: deliverable.id, status: data.decision, version: deliverable.version };
   });
+  await notifyDeliverable({
+    event: data.decision,
+    workspaceId: data.workspaceId,
+    deliverableId: result.id,
+    version: result.version,
+    actorId,
+  });
+  return { id: result.id, status: result.status };
 }
 
 export async function createNextDeliverableVersion(
@@ -170,7 +184,14 @@ export async function submitDeliverable(
 ) {
   const prisma = getPrisma();
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
+    const current = await tx.deliverable.findFirst({
+      where: { id: deliverableId, workspaceId },
+      select: { status: true, version: true },
+    });
+    if (!current) throw new Error("Deliverable not found.");
+    const transition = transitionDeliverable(current.status, "SUBMIT");
+    if (!transition.ok) throw new Error(transition.reason);
     const updated = await tx.deliverable.updateMany({
       where: {
         id: deliverableId,
@@ -200,9 +221,11 @@ export async function submitDeliverable(
 
     return tx.deliverable.findFirstOrThrow({
       where: { id: deliverableId, workspaceId },
-      select: { id: true, status: true, revision: true, submittedAt: true },
+      select: { id: true, status: true, revision: true, submittedAt: true, version: true },
     });
   });
+  await notifyDeliverable({ event: "SUBMITTED", workspaceId, deliverableId, version: result.version, actorId });
+  return result;
 }
 
 export async function attachFileToDeliverable(

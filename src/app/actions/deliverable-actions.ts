@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireClientAccess, requireRole } from "@/server/authz";
 import { getPrisma } from "@/lib/prisma";
+import { addDeliverableComment } from "@/server/services/deliverable-comment-service";
 import { actionFailure, actionSuccess, type ActionResult } from "@/server/action-result";
 import {
   createDeliverable,
@@ -134,4 +135,29 @@ export async function createNextVersionFormAction(
   const deliverableId = String(formData.get("deliverableId") ?? "");
   const result = await createNextDeliverableVersionAction(workspaceId, deliverableId);
   return result.ok ? { success: `Created draft version ${result.data.version}. Upload its updated file below.`, deliverableId: result.data.id } : { error: result.error.message };
+}
+
+export async function addClientDeliverableCommentAction(formData: FormData): Promise<void> {
+  const workspaceId = String(formData.get("workspaceId") ?? "");
+  const deliverableId = String(formData.get("deliverableId") ?? "");
+  const body = String(formData.get("body") ?? "");
+  const prisma = getPrisma();
+  const deliverable = await prisma.deliverable.findFirst({
+    where: { id: deliverableId, workspaceId },
+    select: { projectId: true },
+  });
+  if (!deliverable) throw new Error("Deliverable not found.");
+  const { user } = await requireClientAccess(workspaceId, deliverable.projectId);
+  if (!user.clientId) throw new Error("Client account required.");
+  await addDeliverableComment({ workspaceId, deliverableId, actorId: user.id, clientId: user.clientId, body });
+  revalidatePath("/portal/" + deliverable.projectId);
+}
+
+export async function addTeamDeliverableCommentAction(formData: FormData): Promise<void> {
+  const workspaceId = String(formData.get("workspaceId") ?? "");
+  const deliverableId = String(formData.get("deliverableId") ?? "");
+  const body = String(formData.get("body") ?? "");
+  const { user } = await requireRole(workspaceId, ["OWNER", "ADMIN", "MEMBER"]);
+  await addDeliverableComment({ workspaceId, deliverableId, actorId: user.id, body });
+  revalidatePath("/app/projects");
 }

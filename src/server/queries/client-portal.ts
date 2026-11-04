@@ -44,7 +44,11 @@ export async function getClientProjectPortal(workspaceId: string, projectId: str
       deliverables: {
         where: { status: { in: ["SUBMITTED", "APPROVED", "CHANGES_REQUESTED"] } },
         orderBy: [{ name: "asc" }, { version: "desc" }],
-        select: { id: true, name: true, description: true, version: true, status: true, fileName: true, mimeType: true, sizeBytes: true, revision: true, submittedAt: true, updatedAt: true },
+        select: {
+          id: true, name: true, description: true, version: true, status: true, fileName: true, mimeType: true, sizeBytes: true, revision: true, submittedAt: true, updatedAt: true,
+          reviews: { orderBy: { createdAt: "desc" }, take: 10, select: { id: true, decision: true, feedback: true, version: true, createdAt: true, reviewer: { select: { name: true } } } },
+          comments: { orderBy: { createdAt: "asc" }, take: 50, select: { id: true, body: true, version: true, createdAt: true, author: { select: { name: true } } } },
+        },
       },
     },
   });

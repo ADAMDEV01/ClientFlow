@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getClientProjectPortal } from "@/server/queries/client-portal";
-import { submitClientReviewAction } from "@/app/actions/deliverable-actions";
+import { submitClientReviewAction, addClientDeliverableCommentAction } from "@/app/actions/deliverable-actions";
 
 export default async function ClientPortalPage({
   params,
@@ -45,6 +45,17 @@ export default async function ClientPortalPage({
         <div className="mt-4 space-y-4">
           {project.deliverables.map((item) => <article key={item.id} className="rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
             <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-semibold">{item.name} <span className="text-xs font-normal text-slate-500">v{item.version}</span></h3><p className="mt-1 text-sm text-slate-500">{item.description ?? item.fileName ?? "Project deliverable"}</p>{item.fileName ? <a href={`/api/workspaces/${project.workspaceId}/deliverables/${item.id}/download`} className="mt-2 inline-block text-xs font-semibold text-indigo-600">Download file</a> : null}</div><span className="rounded-full bg-slate-100 px-3 py-1 text-xs dark:bg-slate-800">{item.status.toLowerCase().replace("_", " ")}</span></div>
+            <div className="mt-4 space-y-2 border-t border-slate-200 pt-4 dark:border-slate-800">
+              <h4 className="text-sm font-semibold">Discussion</h4>
+              {item.comments.map(comment => <div key={comment.id} className="rounded-lg bg-slate-50 p-3 text-sm dark:bg-slate-900"><p>{comment.body}</p><p className="mt-1 text-xs text-slate-500">{comment.author.name ?? "ClientFlow user"} · v{comment.version} · {comment.createdAt.toLocaleString()}</p></div>)}
+              <form action={addClientDeliverableCommentAction} className="space-y-2">
+                <input type="hidden" name="workspaceId" value={project.workspaceId} />
+                <input type="hidden" name="deliverableId" value={item.id} />
+                <textarea name="body" required maxLength={4000} rows={2} placeholder="Add a comment…" className="w-full rounded-xl border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-700" />
+                <button className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold dark:border-slate-700">Post comment</button>
+              </form>
+            </div>
+            {item.reviews.map(review => <div key={review.id} className="mt-3 rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-800"><p className="font-medium">{review.decision.replace("_", " ")} · v{review.version}</p>{review.feedback ? <p className="mt-1 text-slate-600 dark:text-slate-300">{review.feedback}</p> : null}<p className="mt-1 text-xs text-slate-500">{review.reviewer.name ?? "Reviewer"} · {review.createdAt.toLocaleString()}</p></div>)}
             {item.status === "SUBMITTED" ? <form action={submitClientReviewAction} className="mt-5 space-y-3 border-t border-slate-200 pt-4 dark:border-slate-800">
               <input type="hidden" name="workspaceId" value={project.workspaceId} />
               <input type="hidden" name="deliverableId" value={item.id} />
