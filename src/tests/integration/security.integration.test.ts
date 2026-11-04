@@ -61,8 +61,8 @@ beforeAll(async () => {
     data: {
       name: "Other Integration Workspace",
       slug: "other-integration-" + suffix,
-      ownerId: clientUserId,
-      members: { create: { userId: clientUserId, role: "OWNER" } },
+      ownerId,
+      members: { create: { userId: ownerId, role: "OWNER" } },
     },
     select: { id: true },
   });
@@ -104,6 +104,8 @@ describe("PostgreSQL authorization matrix", () => {
     { name: "invite a client portal user", allowed: ["OWNER", "ADMIN"] },
     { name: "delete workspace records", allowed: ["OWNER", "ADMIN"] },
     { name: "manage workspace roles", allowed: ["OWNER"] },
+    { name: "upload and submit deliverables", allowed: ["OWNER", "ADMIN", "MEMBER"] },
+    { name: "review client deliverables", allowed: ["CLIENT"], clientAction: true },
   ] as const;
 
   it.each(roles.flatMap((role) =>
@@ -112,11 +114,25 @@ describe("PostgreSQL authorization matrix", () => {
       action: action.name,
       allowed: (action.allowed as readonly string[]).includes(role),
       rolesAllowed: action.allowed,
+      clientAction: "clientAction" in action && action.clientAction === true,
     })),
-  ))("$role: $action => allowed=$allowed", async ({ role, allowed, rolesAllowed }) => {
+  ))("$role: $action => allowed=$allowed", async ({ role, allowed, rolesAllowed, clientAction }) => {
     authMock.mockResolvedValue({
       user: { id: users.get(role), role, clientId: role === "CLIENT" ? clientId : null },
     });
+
+    if (clientAction) {
+      if (allowed) {
+        await expect(requireClientProjectAccess(workspaceId, projectId)).resolves.toMatchObject({
+          project: { id: projectId, workspaceId, clientId },
+        });
+      } else {
+        await expect(requireClientProjectAccess(workspaceId, projectId)).rejects.toMatchObject({
+          code: "CLIENT_ACCESS_DENIED",
+        });
+      }
+      return;
+    }
 
     if (role === "CLIENT") {
       await expect(requireRole(workspaceId, rolesAllowed)).rejects.toMatchObject({
@@ -170,6 +186,19 @@ describe("PostgreSQL authorization matrix", () => {
 });
 
 describe("deliverable workflow and concurrent review", () => {
+  it("rejects client review before a draft has been submitted", async () => {
+    const draft = await prisma.deliverable.create({
+      data: { workspaceId, projectId, name: "Unsubmitted " + suffix, status: "DRAFT" },
+      select: { id: true },
+    });
+    await expect(decideDeliverable(
+      { workspaceId, deliverableId: draft.id, expectedRevision: 0, decision: "APPROVED" },
+      users.get("CLIENT")!,
+      clientId,
+    )).rejects.toThrow("unavailable for review");
+    expect(await prisma.review.count({ where: { workspaceId, deliverableId: draft.id } })).toBe(0);
+  });
+
   it("allows one submission and exactly one decision for a revision under concurrent requests", async () => {
     const draft = await prisma.deliverable.create({
       data: {
