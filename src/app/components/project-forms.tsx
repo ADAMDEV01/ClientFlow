@@ -5,13 +5,15 @@ import { UploadDeliverableForm } from "@/app/components/upload-deliverable-form"
 import { createDeliverableFormAction, submitDeliverableFormAction, createNextVersionFormAction, type DeliverableFormState } from "@/app/actions/deliverable-actions";
 import {
   createClientFormAction,
-  createProjectPhase3FormAction,
-  createTaskPhase3FormAction,
-  createMilestonePhase3FormAction,
   type ProjectFormState,
   updateTaskStatusFormAction,
   type TaskStatusFormState,
 } from "@/app/actions/project-actions";
+import {
+  createProjectPhase3FormAction,
+  createTaskPhase3FormAction,
+  createMilestonePhase3FormAction,
+} from "@/app/actions/phase3-actions";
 
 const initialState: ProjectFormState = {};
 
