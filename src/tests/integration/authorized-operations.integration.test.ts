@@ -97,13 +97,13 @@ describe("authorized server actions persist successful operations", () => {
       description: "Persisted project update",
       clientId,
       memberIds: [ownerId],
-    }, createdProject.data.id);
+    }, (createdProject.data as { id: string }).id);
     expect(updatedProject.ok).toBe(true);
-    expect(await prisma.project.findUnique({ where: { id: createdProject.data.id } }))
+    expect(await prisma.project.findUnique({ where: { id: (createdProject.data as { id: string }).id } }))
       .toMatchObject({ name: "Updated Operations Project", description: "Persisted project update" });
 
     const milestone = await saveMilestoneAction(workspaceId, {
-      projectId: createdProject.data.id,
+      projectId: (createdProject.data as { id: string }).id,
       name: "Initial milestone",
       status: "PENDING",
     });
@@ -111,17 +111,17 @@ describe("authorized server actions persist successful operations", () => {
     if (!milestone.ok) throw new Error(milestone.error.message);
 
     const updatedMilestone = await saveMilestoneAction(workspaceId, {
-      projectId: createdProject.data.id,
+      projectId: (createdProject.data as { id: string }).id,
       name: "Updated milestone",
       status: "COMPLETED",
-    }, milestone.data.id);
+    }, (milestone.data as { id: string }).id);
     expect(updatedMilestone.ok).toBe(true);
-    expect(await prisma.milestone.findUnique({ where: { id: milestone.data.id } }))
+    expect(await prisma.milestone.findUnique({ where: { id: (milestone.data as { id: string }).id } }))
       .toMatchObject({ name: "Updated milestone", status: "COMPLETED" });
 
     const task = await saveTaskAction(workspaceId, {
-      projectId: createdProject.data.id,
-      milestoneId: milestone.data.id,
+      projectId: (createdProject.data as { id: string }).id,
+      milestoneId: (milestone.data as { id: string }).id,
       title: "Initial task",
       priority: "HIGH",
       status: "TODO",
@@ -131,28 +131,28 @@ describe("authorized server actions persist successful operations", () => {
     if (!task.ok) throw new Error(task.error.message);
 
     const updatedTask = await saveTaskAction(workspaceId, {
-      projectId: createdProject.data.id,
-      milestoneId: milestone.data.id,
+      projectId: (createdProject.data as { id: string }).id,
+      milestoneId: (milestone.data as { id: string }).id,
       title: "Updated task",
       priority: "URGENT",
       status: "IN_PROGRESS",
       visibleToClient: true,
-    }, task.data.id);
+    }, (task.data as { id: string }).id);
     expect(updatedTask.ok).toBe(true);
-    expect(await prisma.task.findUnique({ where: { id: task.data.id } }))
+    expect(await prisma.task.findUnique({ where: { id: (task.data as { id: string }).id } }))
       .toMatchObject({ title: "Updated task", priority: "URGENT", status: "IN_PROGRESS", visibleToClient: true });
 
-    const deletedTask = await deleteTaskAction(workspaceId, task.data.id);
+    const deletedTask = await deleteTaskAction(workspaceId, (task.data as { id: string }).id);
     expect(deletedTask.ok).toBe(true);
-    expect(await prisma.task.findUnique({ where: { id: task.data.id } })).toBeNull();
+    expect(await prisma.task.findUnique({ where: { id: (task.data as { id: string }).id } })).toBeNull();
 
-    const deletedMilestone = await deleteMilestoneAction(workspaceId, milestone.data.id);
+    const deletedMilestone = await deleteMilestoneAction(workspaceId, (milestone.data as { id: string }).id);
     expect(deletedMilestone.ok).toBe(true);
-    expect(await prisma.milestone.findUnique({ where: { id: milestone.data.id } })).toBeNull();
+    expect(await prisma.milestone.findUnique({ where: { id: (milestone.data as { id: string }).id } })).toBeNull();
 
-    const deletedProject = await deleteProjectAction(workspaceId, createdProject.data.id);
+    const deletedProject = await deleteProjectAction(workspaceId, (createdProject.data as { id: string }).id);
     expect(deletedProject.ok).toBe(true);
-    expect(await prisma.project.findUnique({ where: { id: createdProject.data.id } })).toBeNull();
+    expect(await prisma.project.findUnique({ where: { id: (createdProject.data as { id: string }).id } })).toBeNull();
 
     const deletedClient = await deleteClientAction(workspaceId, createdClient.data.id);
     expect(deletedClient.ok).toBe(true);
@@ -197,7 +197,7 @@ describe("authorized server actions persist successful operations", () => {
     expect(created.ok).toBe(true);
     if (!created.ok) throw new Error(created.error.message);
 
-    const submitted = await submitDeliverableAction(workspaceId, ownerId, created.data.id, 0);
+    const submitted = await submitDeliverableAction(workspaceId, created.data.id, 0);
     expect(submitted.ok).toBe(true);
     expect(await prisma.deliverable.findUnique({ where: { id: created.data.id } }))
       .toMatchObject({ status: "SUBMITTED", revision: 1, version: 1 });
@@ -235,7 +235,7 @@ describe("authorized server actions persist successful operations", () => {
     if (!nextVersion.ok) throw new Error(nextVersion.error.message);
     expect(nextVersion.data).toMatchObject({ version: 2, status: "DRAFT" });
 
-    const resubmitted = await submitDeliverableAction(workspaceId, ownerId, nextVersion.data.id, 0);
+    const resubmitted = await submitDeliverableAction(workspaceId, nextVersion.data.id, 0);
     expect(resubmitted.ok).toBe(true);
     expect(await prisma.deliverable.findUnique({ where: { id: nextVersion.data.id } }))
       .toMatchObject({ status: "SUBMITTED", revision: 1, version: 2 });
