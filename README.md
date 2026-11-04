@@ -146,3 +146,8 @@ Do not consider a deployment production-ready until a real Neon database, produc
 
 
 See [docs/DATABASE.md](docs/DATABASE.md) for the Mermaid ER diagram and database constraint rationale.
+
+
+## Production setup
+
+See [Production service setup](docs/PRODUCTION_SETUP.md) for PostgreSQL migration preflight, private S3-compatible storage, Resend invitation email, and post-deployment verification.

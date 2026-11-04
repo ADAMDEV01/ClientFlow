@@ -8,35 +8,36 @@ type InvitationEmail = {
 };
 
 /**
- * Send through Resend when configured. Returning false keeps local development
- * and deployments without email credentials usable through their manual invite URL.
+ * Send through Resend when configured. Delivery failures deliberately fall
+ * back to the one-time invitation URL so an already-created invitation is
+ * never stranded because an external mail provider is unavailable.
  */
 export async function sendInvitationEmail(input: InvitationEmail): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL;
   if (!apiKey || !from) return false;
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to: [input.to],
-      subject: input.subject,
-      html: input.html,
-      text: input.text,
-    }),
-    signal: AbortSignal.timeout(10_000),
-  });
-
-  if (!response.ok) {
-    // Do not include provider response bodies: they may contain recipient data.
-    throw new Error("Invitation email delivery failed. Check the Resend configuration and sender verification.");
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        to: [input.to],
+        subject: input.subject,
+        html: input.html,
+        text: input.text,
+      }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    return response.ok;
+  } catch {
+    // Do not leak provider response bodies or recipient data into logs/errors.
+    return false;
   }
-  return true;
 }
 
 export function getAppBaseUrl(): string {
