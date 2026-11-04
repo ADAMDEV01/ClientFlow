@@ -34,6 +34,8 @@ test("full client review lifecycle: register, invite, upload, request changes, r
     await owner.getByPlaceholder("Project name").fill("E2E Website Project");
     await owner.getByRole("combobox").first().selectOption({ label: "E2E Client" });
     await owner.getByRole("button", { name: "Create project" }).click();
+    await expect(owner.getByRole("status")).toContainText("Project created.");
+    await owner.goto("/app/projects");
     await expect(owner.getByText("E2E Website Project")).toBeVisible();
 
     await owner.goto("/app/clients");
