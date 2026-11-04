@@ -42,7 +42,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
+      - run: npm ci
       - run: npm run db:generate
       - run: npm run db:deploy
       - run: npm run db:seed
@@ -78,7 +78,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
+      - run: npm ci
       - run: npm run db:generate
       - run: npm run db:deploy
       - run: npm run test:integration
@@ -111,7 +111,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
+      - run: npm ci
       - run: npm run db:generate
       - run: npm run db:deploy
       - run: npm run db:seed

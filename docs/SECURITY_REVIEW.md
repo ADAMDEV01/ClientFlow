@@ -26,6 +26,7 @@ rate limiting, uploads/downloads, response headers, and secret configuration.
 
 - Configure a strong, unique AUTH_SECRET and HTTPS AUTH_URL in production. Never reuse CI credentials.
 - Configure a private S3-compatible bucket with least-privilege access. Public bucket access must remain disabled; do not expose object keys as public URLs.
+- Before deploying the `Client.userId` unique-index migration, verify that no user is linked to multiple client profiles. Resolve any duplicates deliberately before running migrations; the migration does not unlink or delete client data.
 - Configure shared durable rate-limit storage for horizontally scaled production instances. The current PostgreSQL limiter is shared when all instances use the same database.
 - Configure RESEND_API_KEY and RESEND_FROM_EMAIL for real invitation email delivery.
 - The current upload signature check verifies file headers, not full PDF/image parsing or DOCX/XLSX archive contents. Files are downloaded as attachments and are not rendered inline. Add malware scanning and archive expansion limits before accepting untrusted files at larger scale.
