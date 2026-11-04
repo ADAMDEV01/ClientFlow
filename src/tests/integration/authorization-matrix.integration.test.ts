@@ -139,7 +139,14 @@ describe("PostgreSQL server-action authorization matrix", () => {
     review.set("expectedRevision", "0");
     review.set("decision", "APPROVED");
     review.set("feedback", "");
-    await expectThrownAuthorization(() => submitClientReviewAction(review), allowed);
+    let reviewError: unknown;
+    try {
+      await submitClientReviewAction(review);
+    } catch (error) {
+      reviewError = error;
+    }
+    expect(reviewError).toBeInstanceOf(Error);
+    expect((reviewError as Error).message === "Client portal access is required.").toBe(!allowed);
 
     const comment = new FormData();
     comment.set("workspaceId", workspaceId);
