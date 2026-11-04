@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { getPrisma } from "@/lib/prisma";
 import { requireWorkspaceMember } from "@/server/authz";
 import { InvitationForm } from "@/app/components/invitation-form";
-import { TeamMemberControls } from "@/app/components/phase3-team-controls";
+import { TeamMemberControls } from "@/app/components/team-member-controls";
 
 export default async function TeamPage() {
   const session = await auth();

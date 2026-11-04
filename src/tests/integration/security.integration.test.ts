@@ -9,7 +9,7 @@ import { requireClientProjectAccess, requireRole } from "@/server/authz";
 import { decideDeliverable, submitDeliverable } from "@/server/services/deliverable-service";
 import { consumeRateLimit } from "@/server/services/rate-limit";
 import { changeMemberRole } from "@/server/services/phase3-service";
-import { deleteProjectAction, changeMemberRoleAction, removeWorkspaceMemberAction } from "@/app/actions/phase3-actions";
+import { deleteProjectAction, changeMemberRoleAction, removeWorkspaceMemberAction } from "@/app/actions/project-management-actions";
 import { createInvitationAction } from "@/app/actions/invitation-actions";
 
 const prisma = getPrisma();

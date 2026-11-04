@@ -5,7 +5,7 @@ import { getPrisma } from "@/lib/prisma";
 import { requireWorkspaceMember } from "@/server/authz";
 import { CreateClientForm } from "@/app/components/project-forms";
 import { ClientPortalInvitationForm } from "@/app/components/client-portal-invitation-form";
-import { ClientRecordControls } from "@/app/components/phase3-record-controls";
+import { ClientRecordControls } from "@/app/components/record-controls";
 
 export default async function ClientsPage() {
   const session = await auth();

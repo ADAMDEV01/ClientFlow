@@ -10,7 +10,7 @@ import { createClientAction } from "@/app/actions/project-actions";
 import {
   saveClientAction, deleteClientAction, saveProjectAction, deleteProjectAction,
   saveMilestoneAction, deleteMilestoneAction, saveTaskAction, deleteTaskAction,
-} from "@/app/actions/phase3-actions";
+} from "@/app/actions/project-management-actions";
 import {
   createDeliverableAction, submitDeliverableAction, createNextDeliverableVersionAction,
   submitClientReviewAction, addClientDeliverableCommentAction, addTeamDeliverableCommentAction,

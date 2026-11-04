@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { getPrisma } from "@/lib/prisma";
 import { requireWorkspaceMember } from "@/server/authz";
 import { CreateProjectForm } from "@/app/components/project-forms";
-import { ProjectRecordControls } from "@/app/components/phase3-record-controls";
+import { ProjectRecordControls } from "@/app/components/record-controls";
 
 export default async function ProjectsPage() {
   const session = await auth();

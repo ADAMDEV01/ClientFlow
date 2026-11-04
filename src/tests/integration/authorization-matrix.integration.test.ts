@@ -12,7 +12,7 @@ import {
   saveClientAction, deleteClientAction, saveProjectAction, deleteProjectAction,
   saveMilestoneAction, deleteMilestoneAction, saveTaskAction, deleteTaskAction,
   changeMemberRoleAction, removeWorkspaceMemberAction,
-} from "@/app/actions/phase3-actions";
+} from "@/app/actions/project-management-actions";
 import {
   createDeliverableAction, createNextDeliverableVersionAction, submitDeliverableAction,
   submitClientReviewAction, addClientDeliverableCommentAction, addTeamDeliverableCommentAction,
