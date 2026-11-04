@@ -118,7 +118,9 @@ describe("PostgreSQL authorization matrix", () => {
       role,
       action: action.name,
       allowed: (action.allowed as readonly string[]).includes(role),
-      rolesAllowed: action.allowed,
+      rolesAllowed: "clientAction" in action && action.clientAction
+        ? (["OWNER", "ADMIN", "MEMBER"] as const)
+        : action.allowed,
       clientAction: "clientAction" in action && action.clientAction === true,
     })),
   ))("$role: $action => allowed=$allowed", async ({ role, allowed, rolesAllowed, clientAction }) => {
