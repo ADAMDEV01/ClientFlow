@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("full client review lifecycle: register, invite, upload, request changes, resubmit, approve", async ({ browser, baseURL }) => {
+test("full client review lifecycle: register, invite, upload, request changes, resubmit, approve", async ({ browser }) => {
   const ownerContext = await browser.newContext();
   const clientContext = await browser.newContext();
   const owner = await ownerContext.newPage();
@@ -79,7 +79,7 @@ test("full client review lifecycle: register, invite, upload, request changes, r
     await owner.goto("/app/projects");
     await owner.getByText("E2E Website Project").click();
     await owner.getByRole("button", { name: "Create next version" }).click();
-    const replacementForm = owner.locator("form").filter({ has: owner.locator('input[type="file"]') });
+    const replacementForm = owner.locator("form").filter({ has: owner.locator('input[type="file"]') }).last();
     await replacementForm.locator('input[type="file"]').setInputFiles({
       name: "homepage-v2.pdf",
       mimeType: "application/pdf",
