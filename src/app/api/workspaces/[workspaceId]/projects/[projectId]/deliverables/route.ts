@@ -58,7 +58,7 @@ export async function POST(
     const maxRequestSize = MAX_FILE_SIZE + 256 * 1024;
     const contentLengthHeader = request.headers.get("content-length");
     if (contentLengthHeader) {
-      if (!/^\\d+$/.test(contentLengthHeader)) {
+      if (!/^\d+$/.test(contentLengthHeader)) {
         return NextResponse.json({ error: "Invalid upload request size." }, { status: 400 });
       }
       const contentLength = Number(contentLengthHeader);
