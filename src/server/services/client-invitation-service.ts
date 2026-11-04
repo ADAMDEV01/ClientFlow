@@ -6,36 +6,11 @@ import { getPrisma } from "@/lib/prisma";
 import { clientPortalInvitationSchema, clientPortalRegistrationSchema } from "@/lib/validations/common";
 import { writeActivity } from "@/server/services/activity";
 import { consumeRateLimit } from "@/server/services/rate-limit";
+import { escapeHtml, getAppBaseUrl, sendInvitationEmail } from "@/server/services/email";
 
 const EXPIRY_DAYS = 7;
 function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
-}
-function invitationUrl(token: string) {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? process.env.AUTH_URL ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
-  return new URL(`/client-invite/${token}`, base).toString();
-}
-
-async function sendClientInvitationEmail(to: string, clientName: string, url: string) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL;
-  if (apiKey && from) {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from,
-        to: [to],
-        subject: "Your ClientFlow portal invitation",
-        html: `<p>You have been invited to the ClientFlow portal for <strong>${clientName.replace(/[<>]/g, "")}</strong>.</p><p><a href="${url}">Accept invitation</a></p><p>This link expires in ${EXPIRY_DAYS} days and can only be used once.</p>`,
-      }),
-    });
-    if (!response.ok) throw new Error("The invitation email could not be sent.");
-  } else if (process.env.NODE_ENV !== "production") {
-    console.info("[ClientFlow email stub]", { to, subject: "Your ClientFlow portal invitation", invitationUrl: url });
-  } else {
-    console.warn("[ClientFlow] RESEND_API_KEY and RESEND_FROM_EMAIL are not configured; share the generated invitation URL manually.");
-  }
 }
 
 export async function createClientPortalInvitation(workspaceId: string, actorId: string, input: unknown) {
@@ -61,8 +36,13 @@ export async function createClientPortalInvitation(workspaceId: string, actorId:
     await writeActivity(tx, { workspaceId, actorId, action: "INVITED", entityType: "ClientInvitation", entityId: row.id, metadata: { clientId: client.id, email: row.email } });
     return row;
   });
-  const url = invitationUrl(token);
-  await sendClientInvitationEmail(client.email, client.name, url);
+  const url = new URL(`/client-invite/${token}`, getAppBaseUrl()).toString();
+  await sendInvitationEmail({
+    to: client.email,
+    subject: "Your ClientFlow portal invitation",
+    html: `<p>You have been invited to the ClientFlow portal for <strong>${escapeHtml(client.name)}</strong>.</p><p><a href="${url}">Accept invitation</a></p><p>This link expires in ${EXPIRY_DAYS} days and can only be used once.</p>`,
+    text: `You have been invited to the ClientFlow portal for ${client.name}. Accept invitation: ${url}\nThis link expires in ${EXPIRY_DAYS} days and can only be used once.`,
+  });
   return { ...invitation, clientName: client.name, token, invitationUrl: url };
 }
 
