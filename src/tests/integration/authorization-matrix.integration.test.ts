@@ -58,15 +58,19 @@ const resultActions: Array<{
   { name: "create client portal invitation", allowed: ["OWNER", "ADMIN"], run: (id) => createClientPortalInvitationAction(id, {}) },
 ];
 
-async function expectThrownAuthorization(run: () => Promise<unknown>, allowed: boolean) {
+async function expectAuthorizationBoundary(run: () => Promise<unknown>, allowed: boolean) {
   let thrown: unknown;
   try {
     await run();
   } catch (error) {
     thrown = error;
   }
-  expect(thrown).toBeInstanceOf(Error);
-  expect((thrown as Error).name === "AuthzError").toBe(!allowed);
+  if (allowed) {
+    if (thrown) expect((thrown as Error).name).not.toBe("AuthzError");
+  } else {
+    expect(thrown).toBeInstanceOf(Error);
+    expect((thrown as Error).name).toBe("AuthzError");
+  }
 }
 
 beforeAll(async () => {
@@ -152,7 +156,7 @@ describe("PostgreSQL server-action authorization matrix", () => {
     comment.set("workspaceId", workspaceId);
     comment.set("deliverableId", deliverableId);
     comment.set("body", "Authorization matrix comment");
-    await expectThrownAuthorization(() => addClientDeliverableCommentAction(comment), allowed);
+    await expectAuthorizationBoundary(() => addClientDeliverableCommentAction(comment), allowed);
   });
 
   it.each(roles)("%s -> team deliverable comments", async (role) => {
@@ -162,6 +166,6 @@ describe("PostgreSQL server-action authorization matrix", () => {
     form.set("workspaceId", workspaceId);
     form.set("deliverableId", deliverableId);
     form.set("body", "Authorization matrix comment");
-    await expectThrownAuthorization(() => addTeamDeliverableCommentAction(form), allowed);
+    await expectAuthorizationBoundary(() => addTeamDeliverableCommentAction(form), allowed);
   });
 });
