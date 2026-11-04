@@ -26,7 +26,7 @@ beforeEach(() => {
   vi.resetModules();
   s3Mocks.send.mockReset().mockResolvedValue({});
   s3Mocks.put.mockReset();
-  process.env.NODE_ENV = "production";
+  vi.stubEnv("NODE_ENV", "production");
   process.env.DATABASE_URL = "postgresql://user:password@localhost:5432/clientflow";
   process.env.AUTH_SECRET = "test-auth-secret-that-is-at-least-32-characters";
   process.env.S3_BUCKET = "clientflow-storage";
@@ -38,6 +38,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.unstubAllEnvs();
   process.env = { ...originalEnv };
   vi.restoreAllMocks();
 });
