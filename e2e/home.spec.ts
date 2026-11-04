@@ -8,8 +8,19 @@ test("home page renders the ClientFlow introduction", async ({ page }) => {
 });
 
 test("home page passes axe-core WCAG 2.1 A/AA checks", async ({ page }) => {
-  await page.goto("/");
-  await page.addScriptTag({ content: axe.source });
+  const response = await page.goto("/");
+  const nonce = response?.headers()["x-nonce"];
+  if (!nonce) throw new Error("CSP nonce response header is missing.");
+
+  await page.evaluate(
+    ({ source, scriptNonce }) => {
+      const script = document.createElement("script");
+      script.nonce = scriptNonce;
+      script.textContent = source;
+      document.head.append(script);
+    },
+    { source: axe.source, scriptNonce: nonce },
+  );
 
   const violations = await page.evaluate(async () => {
     type AxeResult = {
