@@ -69,6 +69,7 @@ test("full client review lifecycle: register, invite, upload, request changes, r
       buffer: Buffer.from("%PDF-1.4\n% ClientFlow E2E fixture\n1 0 obj <<>> endobj\ntrailer <<>>\n%%EOF"),
     });
     await uploadForm.getByRole("button", { name: "Upload deliverable" }).click();
+    await expect(owner.getByText("File uploaded as a new draft deliverable.")).toBeVisible();
     await expect(owner.getByText("E2E Homepage Design")).toBeVisible();
     await owner.getByRole("button", { name: "Submit for review" }).click();
 
@@ -84,6 +85,7 @@ test("full client review lifecycle: register, invite, upload, request changes, r
     await owner.goto("/app/projects");
     await owner.getByText("E2E Website Project").click();
     await owner.getByRole("button", { name: "Create next version" }).click();
+    await expect(owner.getByText(/Created draft version 2/)).toBeVisible();
     const replacementForm = owner.locator("form").filter({ has: owner.locator('input[type="file"]') }).last();
     await replacementForm.locator('input[type="file"]').setInputFiles({
       name: "homepage-v2.pdf",
@@ -91,6 +93,7 @@ test("full client review lifecycle: register, invite, upload, request changes, r
       buffer: Buffer.from("%PDF-1.4\n% ClientFlow E2E replacement fixture\n1 0 obj <<>> endobj\ntrailer <<>>\n%%EOF"),
     });
     await replacementForm.getByRole("button", { name: "Upload deliverable" }).click();
+    await expect(owner.getByText("File attached to the new version.")).toBeVisible();
     await expect(owner.getByText("E2E Homepage Design")).toBeVisible();
     await owner.getByRole("button", { name: "Submit for review" }).last().click();
 

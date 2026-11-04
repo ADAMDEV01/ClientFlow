@@ -15,6 +15,36 @@ const ALLOWED_TYPES = new Set([
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 ]);
 
+async function readBoundedBody(request: Request, maxBytes: number): Promise<Uint8Array | null> {
+  const reader = request.body?.getReader();
+  if (!reader) return new Uint8Array();
+
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const body = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body;
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ workspaceId: string; projectId: string }> },
@@ -25,18 +55,32 @@ export async function POST(
     const { user } = await requireRole(workspaceId, ["OWNER", "ADMIN", "MEMBER"]);
     const allowed = await consumeRateLimit(`upload:${workspaceId}:${user.id}`, 20, 60 * 60);
     if (!allowed) return NextResponse.json({ error: "Upload rate limit reached. Try again later." }, { status: 429 });
+    const maxRequestSize = MAX_FILE_SIZE + 256 * 1024;
     const contentLengthHeader = request.headers.get("content-length");
-    if (!contentLengthHeader || !/^\\d+$/.test(contentLengthHeader)) {
-      return NextResponse.json({ error: "A valid Content-Length is required for uploads." }, { status: 411 });
+    if (contentLengthHeader) {
+      if (!/^\\d+$/.test(contentLengthHeader)) {
+        return NextResponse.json({ error: "Invalid upload request size." }, { status: 400 });
+      }
+      const contentLength = Number(contentLengthHeader);
+      if (!Number.isSafeInteger(contentLength) || contentLength <= 0) {
+        return NextResponse.json({ error: "Invalid upload request size." }, { status: 400 });
+      }
+      if (contentLength > maxRequestSize) {
+        return NextResponse.json({ error: "Upload request exceeds the 4 MB file limit." }, { status: 413 });
+      }
     }
-    const contentLength = Number(contentLengthHeader);
-    if (!Number.isSafeInteger(contentLength) || contentLength <= 0) {
-      return NextResponse.json({ error: "Invalid upload request size." }, { status: 400 });
-    }
-    if (contentLength > MAX_FILE_SIZE + 256 * 1024) {
+
+    // Enforce the same limit while reading the stream, including chunked
+    // requests that do not provide Content-Length.
+    const requestBody = await readBoundedBody(request, maxRequestSize);
+    if (!requestBody) {
       return NextResponse.json({ error: "Upload request exceeds the 4 MB file limit." }, { status: 413 });
     }
-    const formData = await request.formData();
+    const formData = await new Request(request.url, {
+      method: "POST",
+      headers: request.headers,
+      body: requestBody,
+    }).formData();
     const name = String(formData.get("name") ?? "");
     const description = String(formData.get("description") ?? "");
     const deliverableId = String(formData.get("deliverableId") ?? "");

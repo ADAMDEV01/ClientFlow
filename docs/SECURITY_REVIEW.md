@@ -19,7 +19,7 @@ rate limiting, uploads/downloads, response headers, and secret configuration.
 
 ## Finding and hardening applied
 
-- The upload API previously treated a missing Content-Length as zero, allowing a caller to bypass the early request-size check before multipart parsing. The route now requires a valid positive Content-Length and rejects requests exceeding the file limit plus bounded multipart overhead.
+- The upload API previously treated a missing Content-Length as zero, allowing a caller to bypass the early request-size check before multipart parsing. The route checks Content-Length when available and also enforces the same maximum while streaming the request body, so chunked requests cannot bypass the bound.
 - CI runs PostgreSQL integration tests and the full browser lifecycle independently from the quality/build job.
 
 ## Residual deployment requirements and limitations
