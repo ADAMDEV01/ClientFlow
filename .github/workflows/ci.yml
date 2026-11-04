@@ -37,79 +37,86 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+      - run: npm install
+      - run: npm run db:generate
+      - run: npm run db:deploy
+      - run: npm run db:seed
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:unit
+      - run: npm run build
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Generate Prisma Client
-        run: npm run db:generate
-
-      - name: Apply committed migrations
-        run: npm run db:deploy
-
-      - name: Seed integration database
-        run: npm run db:seed
-
-      - name: Generate initial migration preview
-        run: |
-          mkdir -p /tmp/clientflow-migration
-          npx prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script > /tmp/clientflow-migration/migration.sql
-
-      - name: Upload migration preview
-        uses: actions/upload-artifact@v4
+  integration:
+    name: PostgreSQL integration tests
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/clientflow_integration?schema=public"
+      AUTH_SECRET: "ci-only-secret-that-is-at-least-32-characters-long"
+      AUTH_URL: "http://localhost:3000"
+      NODE_ENV: "test"
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: clientflow_integration
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d clientflow_integration"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          name: schema-migration-${{ github.sha }}
-          path: /tmp/clientflow-migration/migration.sql
-          if-no-files-found: error
-          retention-days: 3
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Unit tests
-        run: npm test
-
-      - name: Production build
-        run: npm run build
+          node-version: 22
+          cache: npm
+      - run: npm install
+      - run: npm run db:generate
+      - run: npm run db:deploy
+      - run: npm run test:integration
 
   e2e:
     name: Playwright E2E
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/clientflow?schema=public"
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/clientflow_e2e?schema=public"
       AUTH_SECRET: "ci-only-secret-that-is-at-least-32-characters-long"
       AUTH_URL: "http://localhost:3000"
       NODE_ENV: "test"
-
+      SEED_DEMO_PASSWORD: "ci-only-demo-password"
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: clientflow_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d clientflow_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Generate Prisma Client
-        run: npm run db:generate
-
-      - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
-
-      - name: Run E2E tests
-        run: npm run test:e2e
+          cache: npm
+      - run: npm install
+      - run: npm run db:generate
+      - run: npm run db:deploy
+      - run: npm run db:seed
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
