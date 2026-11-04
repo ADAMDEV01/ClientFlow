@@ -142,7 +142,7 @@ model Client {
   @@unique([id, workspaceId])
   @@unique([workspaceId, email])
   @@index([workspaceId, createdAt])
-  @@index([userId])
+  @@unique([userId])
 }
 
 model Project {
