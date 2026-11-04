@@ -42,7 +42,10 @@ export function CreateProjectForm({ workspaceId, clients, members = [] }: { work
     <input name="name" required minLength={2} maxLength={120} placeholder="Project name" className={fieldClass} />
     <select name="clientId" required className={fieldClass}><option value="">Select a client</option>{clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}</select>
     <textarea name="description" maxLength={5000} rows={2} placeholder="Project description (optional)" className={fieldClass} />
-    <input name="dueDate" type="date" className={fieldClass} />
+    <label className="grid gap-1 text-xs text-slate-500">Start date<input name="startDate" type="date" className={fieldClass} /></label>
+    <label className="grid gap-1 text-xs text-slate-500">Due date<input name="dueDate" type="date" className={fieldClass} /></label>
+    <label className="grid gap-1 text-xs text-slate-500">Optional budget<input name="budget" type="number" min="0" step="0.01" placeholder="0.00" className={fieldClass} /></label>
+    {members.length ? <fieldset className="grid gap-2"><legend className="text-xs font-medium text-slate-500">Project members</legend>{members.map(member => <label key={member.userId} className="flex items-center gap-2 text-sm"><input type="checkbox" name="memberIds" value={member.userId} defaultChecked />{member.name ?? member.email}</label>)}</fieldset> : null}
     <FormFeedback state={state} />
     <button disabled={pending || clients.length === 0} className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">{pending ? "Creating…" : "Create project"}</button>
     {clients.length === 0 ? <p className="text-xs text-slate-500">Add a client before creating a project.</p> : null}
@@ -57,6 +60,10 @@ export function CreateTaskForm({ workspaceId, projectId, members = [] }: { works
     <h2 className="font-semibold">Add a task</h2>
     <input name="title" required minLength={2} maxLength={160} placeholder="Task title" className={fieldClass} />
     <textarea name="description" rows={2} maxLength={5000} placeholder="Description (optional)" className={fieldClass} />
+    <select name="assigneeId" className={fieldClass}><option value="">Unassigned</option>{members.map(member => <option key={member.userId} value={member.userId}>{member.name ?? member.email}</option>)}</select>
+    <select name="priority" defaultValue="MEDIUM" className={fieldClass}><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option><option value="URGENT">Urgent</option></select>
+    <select name="status" defaultValue="TODO" className={fieldClass}><option value="TODO">To do</option><option value="IN_PROGRESS">In progress</option><option value="DONE">Done</option></select>
+    <input name="dueDate" type="date" className={fieldClass} />
     <label className="flex items-center gap-2 text-sm"><input name="visibleToClient" type="checkbox" /> Visible to client</label>
     <FormFeedback state={state} />
     <button disabled={pending} className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">{pending ? "Adding…" : "Add task"}</button>
@@ -69,7 +76,10 @@ export function CreateMilestoneForm({ workspaceId, projectId }: { workspaceId: s
     <input type="hidden" name="workspaceId" value={workspaceId} /><input type="hidden" name="projectId" value={projectId} />
     <h2 className="font-semibold">Add a milestone</h2>
     <input name="name" required minLength={2} maxLength={120} placeholder="Milestone name" className={fieldClass} />
+    <textarea name="description" rows={2} placeholder="Description (optional)" className={fieldClass} />
     <input name="dueDate" type="date" className={fieldClass} />
+    <select name="status" defaultValue="PENDING" className={fieldClass}><option value="PENDING">Pending</option><option value="IN_PROGRESS">In progress</option><option value="COMPLETED">Completed</option></select>
+    <input name="position" type="number" min="0" placeholder="Order (optional)" className={fieldClass} />
     <FormFeedback state={state} />
     <button disabled={pending} className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold dark:border-slate-700">{pending ? "Adding…" : "Add milestone"}</button>
   </form>;

@@ -25,6 +25,7 @@ export default async function TeamPage() {
       take: 20,
       select: { id: true, email: true, role: true, expiresAt: true },
     }),
+    getPrisma().workspaceMember.count({ where: { workspaceId, role: "OWNER" } }),
   ]);
 
   return <main className="mx-auto max-w-6xl px-6 py-10">
