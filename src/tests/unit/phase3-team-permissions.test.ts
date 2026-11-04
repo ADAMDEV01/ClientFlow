@@ -15,7 +15,8 @@ describe("phase 3 team ownership invariants", () => {
   const workspaceId = "workspace-a";
   const actorId = "owner-a";
   const memberId = "c123456789012345678901234";
-  let tx: Record<string, any>;
+  type MockTx = { workspaceMember: { findFirst: ReturnType<typeof vi.fn>; count: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> } };
+  let tx: MockTx;
 
   beforeEach(() => {
     vi.clearAllMocks();
