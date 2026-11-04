@@ -25,6 +25,8 @@ test("full client review lifecycle: register, invite, upload, request changes, r
     await owner.getByPlaceholder("Client name").fill("E2E Client");
     await owner.getByPlaceholder("Email address").fill(clientEmail);
     await owner.getByRole("button", { name: "Add client" }).click();
+    await expect(owner.getByRole("status")).toContainText("Client added.");
+    await owner.goto("/app/clients");
     const clientCard = owner.locator("article").filter({ hasText: "E2E Client" });
     await expect(clientCard).toContainText(clientEmail);
 
