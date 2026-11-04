@@ -25,30 +25,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const allowed = await consumeRateLimit(`login:${parsed.data.email}`, 8, 15 * 60);
         if (!allowed) return null;
 
-        const user = await getPrisma().user.findUnique({
+        const account = await getPrisma().user.findUnique({
           where: { email: parsed.data.email },
           select: { id: true, name: true, email: true, passwordHash: true },
         });
-        if (!user) return null;
+        if (!account) return null;
 
-        const matches = await argon2.verify(user.passwordHash, parsed.data.password);
+        const matches = await argon2.verify(account.passwordHash, parsed.data.password);
         if (!matches) return null;
-        return { id: user.id, name: user.name, email: user.email };
+        return { id: account.id, name: account.name, email: account.email };
       },
     }),
   ],
   callbacks: {
     ...authConfig.callbacks,
     async jwt({ token, user }) {
-      const userId = user?.id ?? token.userId ?? token.sub;
+      const userId =
+        typeof user?.id === "string" ? user.id :
+        typeof token.userId === "string" ? token.userId :
+        typeof token.sub === "string" ? token.sub : null;
       if (!userId) return token;
 
       const prisma = getPrisma();
       const account = await prisma.user.findUnique({
         where: { id: userId },
-        select: {
-          id: true,
-          activeWorkspaceId: true,
+        include: {
           memberships: {
             orderBy: { createdAt: "asc" },
             select: { workspaceId: true, role: true },
