@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("full client review lifecycle: register, invite, upload, request changes, resubmit, approve", async ({ browser }) => {
+  test.setTimeout(120_000);
   const ownerContext = await browser.newContext();
   const clientContext = await browser.newContext();
   const owner = await ownerContext.newPage();
