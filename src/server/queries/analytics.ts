@@ -164,9 +164,9 @@ export async function getClientActivityFeed() {
     select: {
       id: true,
       name: true,
-      tasks: { select: { id: true } },
+      tasks: { where: { visibleToClient: true }, select: { id: true } },
       milestones: { select: { id: true } },
-      deliverables: { select: { id: true } },
+      deliverables: { where: { status: { in: ["SUBMITTED", "APPROVED", "CHANGES_REQUESTED"] } }, select: { id: true } },
     },
   });
 
