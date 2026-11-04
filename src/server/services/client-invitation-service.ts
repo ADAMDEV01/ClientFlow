@@ -70,8 +70,8 @@ export async function getClientPortalInvitation(token: string) {
   if (!token || token.length > 200) return null;
   return getPrisma().clientInvitation.findFirst({
     where: { tokenHash: hashToken(token), status: "PENDING", expiresAt: { gt: new Date() } },
-    select: { id: true, email: true, expiresAt: true, client: { select: { name: true, userId: true } }, workspace: { select: { name: true } } },
-  });
+    select: { id: true, email: true, expiresAt: true, client: { select: { name: true, email: true, userId: true } }, workspace: { select: { name: true } } },
+  }).then(invitation => invitation && invitation.client.email.toLowerCase() === invitation.email.toLowerCase() ? invitation : null);
 }
 
 export async function acceptClientPortalInvitation(userId: string, userEmail: string, token: string) {
@@ -83,8 +83,8 @@ export async function acceptClientPortalInvitation(userId: string, userEmail: st
       select: { id: true, workspaceId: true, clientId: true, email: true },
     });
     if (!invitation || invitation.email !== userEmail.trim().toLowerCase()) throw new Error("Invitation is invalid, expired, or belongs to another email.");
-    const client = await tx.client.findFirst({ where: { id: invitation.clientId, workspaceId: invitation.workspaceId }, select: { id: true, userId: true } });
-    if (!client || (client.userId && client.userId !== userId)) throw new Error("This client is already linked to another account.");
+    const client = await tx.client.findFirst({ where: { id: invitation.clientId, workspaceId: invitation.workspaceId }, select: { id: true, email: true, userId: true } });
+    if (!client || client.email.toLowerCase() !== invitation.email.toLowerCase() || (client.userId && client.userId !== userId)) throw new Error("This client is already linked to another account.");
     const consumed = await tx.clientInvitation.updateMany({ where: { id: invitation.id, status: "PENDING", expiresAt: { gt: new Date() } }, data: { status: "ACCEPTED", acceptedAt: new Date() } });
     if (consumed.count !== 1) throw new Error("Invitation has already been used.");
     if (!client.userId) {
@@ -108,6 +108,8 @@ export async function registerAndAcceptClientInvitation(token: string, input: un
     });
     if (!invitation) throw new Error("Invitation is invalid, expired, or has already been used.");
     const userEmail = invitation.email.toLowerCase();
+    const client = await tx.client.findFirst({ where: { id: invitation.clientId, workspaceId: invitation.workspaceId }, select: { id: true, email: true, userId: true } });
+    if (!client || client.email.toLowerCase() !== userEmail || client.userId) throw new Error("This client record changed or is already linked.");
     if (await tx.user.findUnique({ where: { email: userEmail }, select: { id: true } })) throw new Error("An account with this email already exists. Sign in with the invited email to accept the invitation.");
     const user = await tx.user.create({ data: { name: data.name, email: userEmail, passwordHash }, select: { id: true } });
     const linked = await tx.client.updateMany({ where: { id: invitation.clientId, workspaceId: invitation.workspaceId, userId: null }, data: { userId: user.id } });

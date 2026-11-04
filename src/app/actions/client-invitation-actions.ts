@@ -33,6 +33,7 @@ export async function acceptClientPortalInvitationFormAction(_previous: AcceptCl
     const token = String(formData.get("token") ?? "");
     const session = await auth();
     if (session?.user?.id && session.user.email) {
+      if (session.user.role && session.user.role !== "CLIENT") return { error: "Use a separate account for client portal access." };
       await acceptClientPortalInvitation(session.user.id, session.user.email, token);
       redirect("/portal");
     }
