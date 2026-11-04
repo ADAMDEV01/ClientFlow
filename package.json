@@ -19,7 +19,8 @@
     "db:studio": "prisma studio",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "db:preflight:client-user-unique": "tsx scripts/preflight-client-user-unique.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",

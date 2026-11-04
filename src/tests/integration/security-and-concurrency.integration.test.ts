@@ -8,6 +8,7 @@ vi.mock("@/server/services/notification", () => ({ notifyDeliverable: vi.fn().mo
 import { getPrisma } from "@/lib/prisma";
 import { AuthzError, requireClientProjectAccess, requireRole, requireWorkspaceMember, type TeamRole } from "@/server/authz";
 import { submitDeliverable } from "@/server/services/deliverable-service";
+import { removeWorkspaceMember } from "@/server/services/phase3-service";
 
 const prisma = getPrisma();
 const suffix = crypto.randomUUID();
@@ -115,5 +116,41 @@ describe("deliverable concurrency against PostgreSQL", () => {
     const saved = await prisma.deliverable.findUniqueOrThrow({ where: { id: deliverableId } });
     expect(saved.status).toBe("SUBMITTED");
     expect(saved.revision).toBe(1);
+  });
+});
+
+
+describe("workspace owner removal concurrency against PostgreSQL", () => {
+  it("serializes concurrent attempts to remove the other owner and preserves one owner", async () => {
+    const secondOwnerId = `second-owner-${suffix}`;
+    await prisma.user.create({
+      data: {
+        id: secondOwnerId,
+        email: `${secondOwnerId}@integration.clientflow.local`,
+        passwordHash: "integration-only",
+      },
+    });
+    const secondOwnerMembership = await prisma.workspaceMember.create({
+      data: { workspaceId: ids.workspace, userId: secondOwnerId, role: "OWNER" },
+      select: { id: true },
+    });
+    const firstOwnerMembership = await prisma.workspaceMember.findFirstOrThrow({
+      where: { workspaceId: ids.workspace, userId: ids.owner, role: "OWNER" },
+      select: { id: true },
+    });
+
+    try {
+      const results = await Promise.allSettled([
+        removeWorkspaceMember(ids.workspace, ids.owner, { memberId: secondOwnerMembership.id }),
+        removeWorkspaceMember(ids.workspace, secondOwnerId, { memberId: firstOwnerMembership.id }),
+      ]);
+      expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+      expect(results.filter((result) => result.status === "rejected")).toHaveLength(1);
+      expect(await prisma.workspaceMember.count({
+        where: { workspaceId: ids.workspace, role: "OWNER" },
+      })).toBe(1);
+    } finally {
+      await prisma.user.delete({ where: { id: secondOwnerId } });
+    }
   });
 });
