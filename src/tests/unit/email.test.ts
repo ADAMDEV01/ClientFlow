@@ -57,9 +57,60 @@ describe("invitation email delivery", () => {
   it("escapes HTML special characters", () => {
     expect(escapeHtml(`<script a="b"> & 'x'`)).toBe("&lt;script a=&quot;b&quot;&gt; &amp; &#39;x&#39;");
   });
+});
 
-  it("uses the configured application origin", () => {
+describe("application base URL validation", () => {
+  it("uses the configured application origin and ignores a path", () => {
     process.env.NEXT_PUBLIC_APP_URL = "https://clientflow.example.com/path";
+    delete process.env.AUTH_URL;
     expect(getAppBaseUrl()).toBe("https://clientflow.example.com");
+  });
+
+  it("falls back to AUTH_URL when NEXT_PUBLIC_APP_URL is empty", () => {
+    process.env.NEXT_PUBLIC_APP_URL = " ";
+    process.env.AUTH_URL = "https://auth.example.com";
+    expect(getAppBaseUrl()).toBe("https://auth.example.com");
+  });
+
+  it("rejects malformed configured URLs with a clear message", () => {
+    process.env.NEXT_PUBLIC_APP_URL = "not-a-url";
+    expect(() => getAppBaseUrl()).toThrow(
+      "Invalid NEXT_PUBLIC_APP_URL: expected an absolute http:// or https:// application URL.",
+    );
+  });
+
+  it("rejects unsupported protocols", () => {
+    process.env.NEXT_PUBLIC_APP_URL = "javascript:alert(1)";
+    expect(() => getAppBaseUrl()).toThrow("Invalid NEXT_PUBLIC_APP_URL");
+  });
+
+  it("rejects URLs containing credentials", () => {
+    process.env.NEXT_PUBLIC_APP_URL = "https://user:password@example.com";
+    expect(() => getAppBaseUrl()).toThrow("without credentials");
+  });
+
+  it("uses VERCEL_URL when no explicit URL is configured", () => {
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    delete process.env.AUTH_URL;
+    process.env.VERCEL_URL = "clientflow.example.com";
+    expect(getAppBaseUrl()).toBe("https://clientflow.example.com");
+  });
+
+  it("fails clearly in production when no application URL is available", () => {
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    delete process.env.AUTH_URL;
+    delete process.env.VERCEL_URL;
+    process.env.NODE_ENV = "production";
+    expect(() => getAppBaseUrl()).toThrow(
+      "Missing application URL: set NEXT_PUBLIC_APP_URL or AUTH_URL in the production environment.",
+    );
+  });
+
+  it("uses localhost in development when no URL is configured", () => {
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    delete process.env.AUTH_URL;
+    delete process.env.VERCEL_URL;
+    process.env.NODE_ENV = "development";
+    expect(getAppBaseUrl()).toBe("http://localhost:3000");
   });
 });
