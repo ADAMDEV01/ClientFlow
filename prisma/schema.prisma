@@ -7,15 +7,64 @@ datasource db {
   provider = "postgresql"
 }
 
-enum WorkspaceRole { OWNER ADMIN MEMBER }
-enum ProjectStatus { PLANNING ACTIVE ON_HOLD COMPLETED ARCHIVED }
-enum MilestoneStatus { PENDING IN_PROGRESS COMPLETED }
-enum TaskStatus { TODO IN_PROGRESS IN_REVIEW DONE }
-enum TaskPriority { LOW MEDIUM HIGH URGENT }
-enum DeliverableStatus { DRAFT SUBMITTED APPROVED CHANGES_REQUESTED }
-enum ReviewDecision { APPROVED CHANGES_REQUESTED }
-enum InvitationStatus { PENDING ACCEPTED REVOKED EXPIRED }
-enum ActivityAction { CREATED UPDATED DELETED INVITED ACCEPTED_INVITATION SUBMITTED APPROVED CHANGES_REQUESTED COMMENTED UPLOADED DOWNLOADED }
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  ARCHIVED
+}
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+}
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+enum DeliverableStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  CHANGES_REQUESTED
+}
+enum ReviewDecision {
+  APPROVED
+  CHANGES_REQUESTED
+}
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+enum ActivityAction {
+  CREATED
+  UPDATED
+  DELETED
+  INVITED
+  ACCEPTED_INVITATION
+  SUBMITTED
+  APPROVED
+  CHANGES_REQUESTED
+  COMMENTED
+  UPLOADED
+  DOWNLOADED
+}
 
 model User {
   id String @id @default(cuid())
