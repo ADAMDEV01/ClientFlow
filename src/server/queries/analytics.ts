@@ -71,19 +71,19 @@ export async function getWorkspaceActivityOptions(workspaceId: string) {
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
-    prisma.workspaceMember.findMany({
-      where: { workspaceId },
-      orderBy: { user: { name: "asc" } },
-      select: { userId: true, user: { select: { name: true, email: true } } },
+    prisma.activity.findMany({
+      where: { workspaceId, actorId: { not: null } },
+      distinct: ["actorId"],
+      orderBy: { createdAt: "desc" },
+      select: { actorId: true, actor: { select: { name: true, email: true } } },
     }),
   ]);
 
   return {
     projects,
-    actors: members.map(({ userId, user }) => ({
-      id: userId,
-      label: user.name ?? user.email,
-    })),
+    actors: members.flatMap(({ actorId, actor }) =>
+      actorId && actor ? [{ id: actorId, label: actor.name ?? actor.email }] : [],
+    ),
   };
 }
 
