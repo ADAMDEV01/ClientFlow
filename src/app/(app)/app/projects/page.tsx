@@ -96,7 +96,9 @@ export default async function ProjectsPage({
                       {project.status.toLowerCase()}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-slate-500">{project.client.name}</p>
+                  <p className="mt-2 text-sm text-slate-500">
+                    {project.client.name}
+                  </p>
                   <div className="mt-6 flex gap-5 text-xs text-slate-500">
                     <span>{project._count.tasks} tasks</span>
                     <span>{project._count.deliverables} deliverables</span>
