@@ -95,7 +95,7 @@ export async function acceptClientPortalInvitation(userId: string, userEmail: st
     }
     await writeActivity(tx, { workspaceId: invitation.workspaceId, actorId: userId, action: "ACCEPTED_INVITATION", entityType: "ClientInvitation", entityId: invitation.id, metadata: { clientId: client.id } });
     return { workspaceId: invitation.workspaceId, clientId: client.id };
-  });
+  }, { isolationLevel: "Serializable" });
 }
 
 export async function registerAndAcceptClientInvitation(token: string, input: unknown) {
