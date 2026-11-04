@@ -49,7 +49,10 @@ export default async function ProjectsPage({
     prisma.workspaceMember
       .findMany({
         where: { workspaceId },
-        select: { userId: true, user: { select: { name: true, email: true } } },
+        select: {
+          userId: true,
+          user: { select: { name: true, email: true } },
+        },
       })
       .then((rows) =>
         rows.map((row) => ({
