@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export function UploadDeliverableForm({ workspaceId, projectId, deliverableId }: { workspaceId: string; projectId: string; deliverableId?: string }) {
   const [pending, setPending] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const [isError, setIsError] = useState(false);
 
@@ -19,7 +22,8 @@ export function UploadDeliverableForm({ workspaceId, projectId, deliverableId }:
       const result = await response.json() as { error?: string };
       if (!response.ok) throw new Error(result.error ?? "Upload failed.");
       setMessage("File uploaded as a new draft deliverable.");
-      (document.getElementById("deliverable-upload-form") as HTMLFormElement | null)?.reset();
+      formRef.current?.reset();
+      router.refresh();
     } catch (error) {
       setIsError(true);
       setMessage(error instanceof Error ? error.message : "Upload failed.");
@@ -28,7 +32,7 @@ export function UploadDeliverableForm({ workspaceId, projectId, deliverableId }:
     }
   }
 
-  return <form id="deliverable-upload-form" action={submit} className="mt-4 grid gap-3 rounded-xl border border-dashed border-slate-300 p-4 dark:border-slate-700">
+  return <form ref={formRef} action={submit} className="mt-4 grid gap-3 rounded-xl border border-dashed border-slate-300 p-4 dark:border-slate-700">
     <p className="text-sm font-medium">Upload a file</p>
     {deliverableId ? <input type="hidden" name="deliverableId" value={deliverableId} /> : null}
     {!deliverableId ? <input name="name" required minLength={2} maxLength={160} placeholder="Deliverable name" className="rounded-lg border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-700" /> : null}

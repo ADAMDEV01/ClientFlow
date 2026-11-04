@@ -100,7 +100,7 @@ export async function submitDeliverableAction(
   }
 }
 
-export type DeliverableFormState = { error?: string; success?: string };
+export type DeliverableFormState = { error?: string; success?: string; deliverableId?: string };
 
 export async function createDeliverableFormAction(
   _previousState: DeliverableFormState,
