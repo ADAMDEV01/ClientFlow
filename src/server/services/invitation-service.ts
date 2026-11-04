@@ -66,7 +66,7 @@ export async function createWorkspaceInvitation(
   });
 
   const invitationUrl = new URL(`/invite/${token}?workspaceId=${encodeURIComponent(workspaceId)}`, getAppBaseUrl()).toString();
-  await sendInvitationEmail({
+  const emailSent = await sendInvitationEmail({
     to: invitation.email,
     subject: "Your ClientFlow team invitation",
     html: `<p>You have been invited to join a team on ClientFlow as a <strong>${escapeHtml(invitation.role)}</strong>.</p><p><a href="${invitationUrl}">Accept your invitation</a></p><p>This link expires in 7 days and can only be used once.</p>`,
@@ -74,7 +74,7 @@ export async function createWorkspaceInvitation(
   });
 
   // Return the raw token once for the manual-copy fallback. Only its hash is persisted.
-  return { ...invitation, token, invitationUrl };
+  return { ...invitation, token, invitationUrl, emailSent };
 }
 
 export async function acceptWorkspaceInvitation(
