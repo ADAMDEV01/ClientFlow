@@ -10,8 +10,11 @@ export const authConfig = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = String(token.userId ?? token.sub ?? "");
+        session.user.userId = String(token.userId ?? token.sub ?? "");
         session.user.workspaceId =
           typeof token.workspaceId === "string" ? token.workspaceId : null;
+        session.user.activeWorkspaceId =
+          typeof token.activeWorkspaceId === "string" ? token.activeWorkspaceId : null;
         session.user.role =
           token.role === "OWNER" || token.role === "ADMIN" ||
           token.role === "MEMBER" || token.role === "CLIENT"

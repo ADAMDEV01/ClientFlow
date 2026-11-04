@@ -76,6 +76,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       token.userId = userId;
       token.workspaceId = membership?.workspaceId ?? client?.workspaceId ?? null;
+      token.activeWorkspaceId = membership?.workspaceId ?? null;
       token.role = membership?.role ?? (client ? "CLIENT" : null);
       token.clientId = client?.id ?? null;
       return token;

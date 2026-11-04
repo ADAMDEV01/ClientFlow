@@ -32,7 +32,7 @@ export class AuthorizationError extends AuthzError {
 export async function requireUser() {
   const session = await auth();
   if (!session?.user?.id) {
-    throw new AuthzError("UNAUTHENTICATED", "Authentication is required.");
+    throw new AuthorizationError("Authentication is required.");
   }
   return session.user;
 }

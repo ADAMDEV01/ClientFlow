@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { registerAction, type FormState } from "@/app/actions/auth-actions";
+import { loginAction, registerAction, type FormState } from "@/app/actions/auth-actions";
 
 const initialState: FormState = {};
 
@@ -41,13 +41,7 @@ export function RegisterForm() {
 }
 
 export function LoginForm() {
-  const [state, action, pending] = useActionState(
-    async (_previous: FormState, formData: FormData) => {
-      const { loginAction } = await import("@/app/actions/auth-actions");
-      return loginAction(_previous, formData);
-    },
-    initialState,
-  );
+  const [state, action, pending] = useActionState(loginAction, initialState);
   return (
     <form action={action} className="mt-8 space-y-5">
       <div>

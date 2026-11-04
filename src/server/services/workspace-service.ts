@@ -23,6 +23,11 @@ export async function createWorkspaceForUser(
       select: { id: true, name: true, slug: true, createdAt: true },
     });
 
+    await tx.user.update({
+      where: { id: userId },
+      data: { activeWorkspaceId: workspace.id },
+    });
+
     await tx.activity.create({
       data: {
         workspaceId: workspace.id,
