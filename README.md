@@ -19,7 +19,13 @@ ClientFlow is a multi-tenant client and project management SaaS for freelancers 
 
 Requirements: Node.js 22+, npm, and Docker Desktop / Docker Engine.
 
-1. Start the local PostgreSQL database:\n\n   ```bash\n   docker compose up -d postgres\n   ```\n\n2. Install dependencies:
+1. Start the local PostgreSQL database:
+
+   ```bash
+   docker compose up -d postgres
+   ```
+
+2. Install dependencies:
 
    ```bash
    npm install
@@ -50,7 +56,13 @@ Requirements: Node.js 22+, npm, and Docker Desktop / Docker Engine.
    npm run db:migrate
    ```
 
-7. Seed the local database with demo workspaces, roles, clients, and projects:\n\n   ```bash\n   npm run db:seed\n   ```\n\n8. Start the app:
+7. Seed the local database with demo workspaces, roles, clients, and projects:
+
+   ```bash
+   npm run db:seed
+   ```
+
+8. Start the app:
 
    ```bash
    npm run dev
@@ -101,7 +113,9 @@ GitHub Actions runs Prisma Client generation, lint, type checking, unit tests, p
 
 ## Database commands
 
-- `npm run db:generate` — generate Prisma Client.\n- `npm run db:seed` — seed local demo users, workspaces, clients, and projects.\n- `docker compose down -v` — remove the local database volume (destructive; deletes local data).
+- `npm run db:generate` — generate Prisma Client.
+- `npm run db:seed` — seed local demo users, workspaces, clients, and projects.
+- `docker compose down -v` — remove the local database volume (destructive; deletes local data).
 - `npm run db:migrate` — create/apply a development migration.
 - `npm run db:deploy` — apply committed migrations in deployment.
 - `npm run db:studio` — open Prisma Studio.
@@ -129,4 +143,6 @@ Commit migration files together with schema changes. Never commit `.env`, databa
 5. Deploy with `npm run build`.
 
 Do not consider a deployment production-ready until a real Neon database, production S3 bucket, environment variables, and the complete migration set have been configured and verified.
-\n\nSee [docs/DATABASE.md](docs/DATABASE.md) for the Mermaid ER diagram and database constraint rationale.\n
+
+
+See [docs/DATABASE.md](docs/DATABASE.md) for the Mermaid ER diagram and database constraint rationale.
