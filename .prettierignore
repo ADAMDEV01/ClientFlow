@@ -90,3 +90,9 @@ src/tests/unit/project-management-team-permissions.test.ts
 src/tests/unit/project-management-validation.test.ts
 src/tests/unit/storage.test.ts
 tsconfig.json
+src/app/(app)/app/projects/[projectId]/page.tsx
+src/app/(portal)/portal/[projectId]/page.tsx
+src/app/api/workspaces/[workspaceId]/deliverables/[deliverableId]/download/route.ts
+src/app/api/workspaces/[workspaceId]/projects/[projectId]/deliverables/route.ts
+src/app/client-invite/[token]/page.tsx
+src/app/invite/[token]/page.tsx
