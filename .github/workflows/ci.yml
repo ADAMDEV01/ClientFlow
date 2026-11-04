@@ -22,6 +22,21 @@ jobs:
       AUTH_SECRET: "ci-only-secret-that-is-at-least-32-characters-long"
       AUTH_URL: "http://localhost:3000"
       NODE_ENV: "test"
+      SEED_DEMO_PASSWORD: "ci-only-demo-password"
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: clientflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d clientflow"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Checkout
@@ -37,6 +52,12 @@ jobs:
 
       - name: Generate Prisma Client
         run: npm run db:generate
+
+      - name: Apply committed migrations
+        run: npm run db:deploy
+
+      - name: Seed integration database
+        run: npm run db:seed
 
       - name: Generate initial migration preview
         run: |
