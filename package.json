@@ -14,7 +14,10 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:seed": "prisma db seed"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",
@@ -42,6 +45,8 @@
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
     "vitest": "^5.0.4",
-    "prisma": "^7.10.1"
+    "prisma": "^7.10.1",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.6"
   }
 }
