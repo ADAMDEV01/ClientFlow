@@ -9,6 +9,7 @@ const originalEnv = { ...process.env };
 
 afterEach(() => {
   global.fetch = originalFetch;
+  vi.unstubAllEnvs();
   process.env = { ...originalEnv };
   vi.restoreAllMocks();
 });
@@ -100,7 +101,7 @@ describe("application base URL validation", () => {
     delete process.env.NEXT_PUBLIC_APP_URL;
     delete process.env.AUTH_URL;
     delete process.env.VERCEL_URL;
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
     expect(() => getAppBaseUrl()).toThrow(
       "Missing application URL: set NEXT_PUBLIC_APP_URL or AUTH_URL in the production environment.",
     );
@@ -110,7 +111,7 @@ describe("application base URL validation", () => {
     delete process.env.NEXT_PUBLIC_APP_URL;
     delete process.env.AUTH_URL;
     delete process.env.VERCEL_URL;
-    process.env.NODE_ENV = "development";
+    vi.stubEnv("NODE_ENV", "development");
     expect(getAppBaseUrl()).toBe("http://localhost:3000");
   });
 });
