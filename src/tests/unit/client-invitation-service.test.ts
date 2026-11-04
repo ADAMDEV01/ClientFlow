@@ -58,7 +58,7 @@ describe("client portal invitation security", () => {
       client: { findFirst: vi.fn().mockResolvedValueOnce({ id: "client-1", email: invitation.email, userId: null }).mockResolvedValueOnce(null), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
     };
     getPrismaMock.mockReturnValue({ $transaction: (callback: (client: typeof tx) => Promise<unknown>) => callback(tx) });
-    await expect(acceptClientPortalInvitation("user-1", invitation.email, token)).resolves.toEqual({ workspaceId: "workspace-1", clientId: "client-1" });
+    await expect(acceptClientPortalInvitation("user-1", invitation.email.toUpperCase(), token)).resolves.toEqual({ workspaceId: "workspace-1", clientId: "client-1" });
     expect(tx.clientInvitation.updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ id: "invite-1", status: "PENDING" }) }));
     expect(tx.client.updateMany).toHaveBeenCalledWith({ where: { id: "client-1", workspaceId: "workspace-1", userId: null }, data: { userId: "user-1" } });
     expect(writeActivityMock).toHaveBeenCalledOnce();

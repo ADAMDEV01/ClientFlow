@@ -54,8 +54,8 @@ export async function createClientPortalInvitation(workspaceId: string, actorId:
   const invitation = await prisma.$transaction(async tx => {
     const row = await tx.clientInvitation.upsert({
       where: { workspaceId_clientId: { workspaceId, clientId: client.id } },
-      create: { workspaceId, clientId: client.id, email: client.email, tokenHash: hashToken(token), expiresAt, invitedById: actorId },
-      update: { email: client.email, tokenHash: hashToken(token), expiresAt, status: "PENDING", acceptedAt: null, invitedById: actorId },
+      create: { workspaceId, clientId: client.id, email: client.email.trim().toLowerCase(), tokenHash: hashToken(token), expiresAt, invitedById: actorId },
+      update: { email: client.email.trim().toLowerCase(), tokenHash: hashToken(token), expiresAt, status: "PENDING", acceptedAt: null, invitedById: actorId },
       select: { id: true, email: true, expiresAt: true },
     });
     await writeActivity(tx, { workspaceId, actorId, action: "INVITED", entityType: "ClientInvitation", entityId: row.id, metadata: { clientId: client.id, email: row.email } });
@@ -82,7 +82,7 @@ export async function acceptClientPortalInvitation(userId: string, userEmail: st
       where: { tokenHash: hashToken(token), status: "PENDING", expiresAt: { gt: new Date() } },
       select: { id: true, workspaceId: true, clientId: true, email: true },
     });
-    if (!invitation || invitation.email !== userEmail.trim().toLowerCase()) throw new Error("Invitation is invalid, expired, or belongs to another email.");
+    if (!invitation || invitation.email.toLowerCase() !== userEmail.trim().toLowerCase()) throw new Error("Invitation is invalid, expired, or belongs to another email.");
     const client = await tx.client.findFirst({ where: { id: invitation.clientId, workspaceId: invitation.workspaceId }, select: { id: true, email: true, userId: true } });
     if (!client || client.email.toLowerCase() !== invitation.email.toLowerCase() || (client.userId && client.userId !== userId)) throw new Error("This client is already linked to another account.");
     const otherProfile = await tx.client.findFirst({ where: { userId, NOT: { id: client.id } }, select: { id: true } });
