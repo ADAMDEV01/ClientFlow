@@ -123,7 +123,7 @@ Configure these environment variables in Vercel (or the deployment environment):
 
 The production storage adapter uses server-side credentials and does not expose object URLs publicly. Downloads are streamed through an authenticated Route Handler.
 
-Uploads currently allow PDF, PNG, JPEG, WebP, DOCX, and XLSX files up to 4 MB. File names are sanitized for display; object keys are generated server-side.
+Uploads currently allow PDF, PNG, JPEG, WebP, DOCX, and XLSX files up to 4 MB. File names are sanitized for display; object keys are generated server-side. DOCX/XLSX ZIP contents are not inspected for decompressed-size, entry-count, or compression-ratio limits, and malware scanning is not implemented; treat archive inspection as out of scope for this demo.
 
 ## Quality checks
 
