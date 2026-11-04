@@ -125,3 +125,13 @@ export async function submitDeliverableFormAction(
   const result = await submitDeliverableAction(workspaceId, deliverableId, expectedRevision);
   return result.ok ? { success: "Deliverable submitted for client review." } : { error: result.error.message };
 }
+
+export async function createNextVersionFormAction(
+  _previousState: DeliverableFormState,
+  formData: FormData,
+): Promise<DeliverableFormState> {
+  const workspaceId = String(formData.get("workspaceId") ?? "");
+  const deliverableId = String(formData.get("deliverableId") ?? "");
+  const result = await createNextDeliverableVersionAction(workspaceId, deliverableId);
+  return result.ok ? { success: `Created draft version ${result.data.version}.` } : { error: result.error.message };
+}

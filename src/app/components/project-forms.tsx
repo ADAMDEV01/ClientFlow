@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { createDeliverableFormAction, submitDeliverableFormAction } from "@/app/actions/deliverable-actions";
+import { createDeliverableFormAction, submitDeliverableFormAction, createNextVersionFormAction } from "@/app/actions/deliverable-actions";
 import {
   createClientFormAction,
   createProjectFormAction,
@@ -104,5 +104,14 @@ export function TaskStatusForm({ workspaceId, taskId, status }: { workspaceId: s
     </select>
     <button disabled={pending} className="text-xs font-semibold text-indigo-600 disabled:opacity-60">{pending ? "Saving…" : "Save"}</button>
     {state.error ? <span role="alert" className="text-xs text-red-600">{state.error}</span> : null}
+  </form>;
+}
+
+export function CreateNextVersionForm({ workspaceId, deliverableId }: { workspaceId: string; deliverableId: string }) {
+  const [state, action, pending] = useActionState(createNextVersionFormAction, initialState);
+  return <form action={action} className="mt-3">
+    <input type="hidden" name="workspaceId" value={workspaceId} /><input type="hidden" name="deliverableId" value={deliverableId} />
+    <FormFeedback state={state} />
+    <button disabled={pending} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold dark:border-slate-700">{pending ? "Creating…" : "Create next version"}</button>
   </form>;
 }

@@ -12,10 +12,6 @@ export function transitionDeliverable(
     return { ok: true, nextStatus: "SUBMITTED" };
   }
 
-  if (current === "CHANGES_REQUESTED" && requested === "SUBMITTED") {
-    return { ok: true, nextStatus: "SUBMITTED" };
-  }
-
   if (current === "SUBMITTED" && requested === "APPROVED") {
     return { ok: true, nextStatus: "APPROVED" };
   }

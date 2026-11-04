@@ -175,7 +175,7 @@ export async function submitDeliverable(
       where: {
         id: deliverableId,
         workspaceId,
-        status: { in: ["DRAFT", "CHANGES_REQUESTED"] },
+        status: "DRAFT",
         revision: expectedRevision,
       },
       data: {
