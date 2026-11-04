@@ -17,6 +17,7 @@ export async function createWorkspaceInvitation(
   input: unknown,
 ) {
   const data = createInvitationSchema.parse(input);
+  const appBaseUrl = getAppBaseUrl();
   const allowed = await consumeRateLimit(
     `invite:${workspaceId}:${actorId}`,
     10,
@@ -65,7 +66,7 @@ export async function createWorkspaceInvitation(
     return created;
   });
 
-  const invitationUrl = new URL(`/invite/${token}?workspaceId=${encodeURIComponent(workspaceId)}`, getAppBaseUrl()).toString();
+  const invitationUrl = new URL(`/invite/${token}?workspaceId=${encodeURIComponent(workspaceId)}`, appBaseUrl).toString();
   const emailSent = await sendInvitationEmail({
     to: invitation.email,
     subject: "Your ClientFlow team invitation",
