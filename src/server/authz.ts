@@ -5,35 +5,49 @@ import { getPrisma } from "@/lib/prisma";
 
 export type TeamRole = "OWNER" | "ADMIN" | "MEMBER";
 export type PortalRole = TeamRole | "CLIENT";
+export type AuthzErrorCode =
+  | "UNAUTHENTICATED"
+  | "WORKSPACE_ACCESS_DENIED"
+  | "ROLE_FORBIDDEN"
+  | "CLIENT_ACCESS_DENIED";
 
-export class AuthorizationError extends Error {
-  constructor(message = "You are not allowed to perform this action.") {
+export class AuthzError extends Error {
+  constructor(
+    public readonly code: AuthzErrorCode,
+    message: string,
+  ) {
     super(message);
+    this.name = "AuthzError";
+  }
+}
+
+/** Backwards-compatible name for existing service/action imports. */
+export class AuthorizationError extends AuthzError {
+  constructor(message = "You are not allowed to perform this action.") {
+    super("UNAUTHENTICATED", message);
     this.name = "AuthorizationError";
   }
 }
 
-export async function requireAuthenticatedUser() {
+export async function requireUser() {
   const session = await auth();
   if (!session?.user?.id) {
-    throw new AuthorizationError("Authentication is required.");
+    throw new AuthzError("UNAUTHENTICATED", "Authentication is required.");
   }
   return session.user;
 }
 
-export async function requireWorkspaceMember(workspaceId: string) {
-  const user = await requireAuthenticatedUser();
-  const prisma = getPrisma();
+export const requireAuthenticatedUser = requireUser;
 
-  const membership = await prisma.workspaceMember.findFirst({
+export async function requireWorkspaceMember(workspaceId: string) {
+  const user = await requireUser();
+  const membership = await getPrisma().workspaceMember.findFirst({
     where: { workspaceId, userId: user.id },
     select: { id: true, workspaceId: true, userId: true, role: true },
   });
-
   if (!membership) {
-    throw new AuthorizationError("Workspace access denied.");
+    throw new AuthzError("WORKSPACE_ACCESS_DENIED", "Workspace access denied.");
   }
-
   return { user, membership };
 }
 
@@ -42,25 +56,18 @@ export async function requireRole(
   allowedRoles: readonly TeamRole[],
 ) {
   const context = await requireWorkspaceMember(workspaceId);
-
   if (!allowedRoles.includes(context.membership.role)) {
-    throw new AuthorizationError("Your workspace role cannot perform this action.");
+    throw new AuthzError("ROLE_FORBIDDEN", "Your workspace role cannot perform this action.");
   }
-
   return context;
 }
 
-export async function requireClientAccess(
-  workspaceId: string,
-  projectId: string,
-) {
-  const user = await requireAuthenticatedUser();
-  if (!user.clientId) {
-    throw new AuthorizationError("Client portal access is required.");
+export async function requireClientProjectAccess(workspaceId: string, projectId: string) {
+  const user = await requireUser();
+  if (user.role !== "CLIENT" || !user.clientId) {
+    throw new AuthzError("CLIENT_ACCESS_DENIED", "Client portal access is required.");
   }
-
-  const prisma = getPrisma();
-  const project = await prisma.project.findFirst({
+  const project = await getPrisma().project.findFirst({
     where: {
       id: projectId,
       workspaceId,
@@ -69,10 +76,10 @@ export async function requireClientAccess(
     },
     select: { id: true, workspaceId: true, clientId: true },
   });
-
   if (!project) {
-    throw new AuthorizationError("Project access denied.");
+    throw new AuthzError("CLIENT_ACCESS_DENIED", "Project access denied.");
   }
-
   return { user, project };
 }
+
+export const requireClientAccess = requireClientProjectAccess;

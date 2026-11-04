@@ -5,8 +5,7 @@ import { RegisterForm } from "@/app/components/auth-form";
 
 export default async function RegisterPage() {
   const session = await auth();
-  if (session?.user?.id) redirect("/app");
-
+  if (session?.user?.id) redirect(session.user.role === "CLIENT" ? "/portal" : "/app");
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-16">
       <section className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-950">

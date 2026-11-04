@@ -75,10 +75,12 @@ model User {
   emailVerified      DateTime?
   passwordHash       String
   image              String?
+  activeWorkspaceId  String?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
   memberships        WorkspaceMember[]
   ownedWorkspaces    Workspace[]       @relation("WorkspaceOwner")
+  activeWorkspace    Workspace?        @relation("UserActiveWorkspace", fields: [activeWorkspaceId], references: [id], onDelete: SetNull)
   clientProfiles     Client[]
   projectMemberships ProjectMember[]
   assignedTasks      Task[]            @relation("TaskAssignee")
@@ -86,6 +88,7 @@ model User {
   sentInvitations    Invitation[]      @relation("InvitationSender")
 
   @@index([email])
+  @@index([activeWorkspaceId])
 }
 
 model Workspace {
@@ -96,6 +99,7 @@ model Workspace {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   owner       User              @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  activeUsers User[]             @relation("UserActiveWorkspace")
   members     WorkspaceMember[]
   clients     Client[]
   projects    Project[]

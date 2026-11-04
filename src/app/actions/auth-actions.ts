@@ -1,12 +1,21 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import argon2 from "argon2";
 import { AuthError } from "next-auth";
+import { redirect } from "next/navigation";
 import { signIn, signOut } from "@/auth";
 import { getPrisma } from "@/lib/prisma";
-import { registerSchema } from "@/lib/validations/auth";
+import { loginSchema, registerSchema } from "@/lib/validations/auth";
+import { consumeRateLimit } from "@/server/services/rate-limit";
 
 export type FormState = { error?: string; success?: string };
+
+function workspaceSlug(name: string) {
+  const base = name.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 36) || "workspace";
+  return `${base}-${randomUUID().slice(0, 6)}`;
+}
 
 export async function registerAction(
   _previousState: FormState,
@@ -16,33 +25,54 @@ export async function registerAction(
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
+    workspaceName: formData.get("workspaceName"),
   });
-
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Check your details." };
   }
 
-  const prisma = getPrisma();
-  const existing = await prisma.user.findUnique({
-    where: { email: parsed.data.email },
-    select: { id: true },
-  });
-  if (existing) return { error: "An account with this email already exists." };
+  const allowed = await consumeRateLimit(`register:${parsed.data.email}`, 5, 60 * 60);
+  if (!allowed) return { error: "Too many registration attempts. Try again later." };
 
-  const passwordHash = await argon2.hash(parsed.data.password, {
-    type: argon2.argon2id,
-  });
+  const prisma = getPrisma();
+  const passwordHash = await argon2.hash(parsed.data.password, { type: argon2.argon2id });
 
   try {
-    await prisma.user.create({
-      data: {
-        name: parsed.data.name,
-        email: parsed.data.email,
-        passwordHash,
-      },
-      select: { id: true },
+    await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: { name: parsed.data.name, email: parsed.data.email, passwordHash },
+        select: { id: true },
+      });
+      const workspace = await tx.workspace.create({
+        data: {
+          name: parsed.data.workspaceName,
+          slug: workspaceSlug(parsed.data.workspaceName),
+          ownerId: user.id,
+        },
+        select: { id: true },
+      });
+      await tx.workspaceMember.create({
+        data: { workspaceId: workspace.id, userId: user.id, role: "OWNER" },
+      });
+      await tx.user.update({
+        where: { id: user.id },
+        data: { activeWorkspaceId: workspace.id },
+      });
+      await tx.activity.create({
+        data: {
+          workspaceId: workspace.id,
+          actorId: user.id,
+          action: "CREATED",
+          entityType: "Workspace",
+          entityId: workspace.id,
+          metadata: { source: "registration" },
+        },
+      });
     });
-  } catch {
+  } catch (error) {
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "P2002") {
+      return { error: "An account with this email already exists." };
+    }
     return { error: "We could not create your account. Please try again." };
   }
 
@@ -54,20 +84,36 @@ export async function registerAction(
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      return { error: "Account created. Please sign in to continue." };
+      return { error: "Your account was created. Please sign in." };
     }
     throw error;
   }
-
   return { success: "Account created." };
 }
 
-export async function loginAction(formData: FormData) {
-  await signIn("credentials", {
+export async function loginAction(
+  _previousState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
-    redirectTo: "/app",
   });
+  if (!parsed.success) return { error: "Enter a valid email and password." };
+
+  try {
+    await signIn("credentials", {
+      email: parsed.data.email,
+      password: parsed.data.password,
+      redirectTo: "/app",
+    });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return { error: "Invalid email or password, or too many attempts." };
+    }
+    throw error;
+  }
+  return {};
 }
 
 export async function logoutAction() {
