@@ -88,6 +88,11 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  if (workspaceId) {
+    await prisma.review.deleteMany({ where: { workspaceId } });
+    await prisma.deliverableComment.deleteMany({ where: { workspaceId } });
+  }
+  await prisma.rateLimitBucket.deleteMany({ where: { key: "integration-rate-limit:" + suffix } });
   await prisma.workspace.deleteMany({ where: { id: { in: workspaceIds } } });
   await prisma.user.deleteMany({ where: { id: { in: [...users.values()] } } });
   await prisma.$disconnect();
