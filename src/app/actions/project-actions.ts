@@ -142,3 +142,16 @@ export async function linkClientPortalAccountAction(
     return failure(error);
   }
 }
+
+export type LinkPortalFormState = { error?: string; success?: string };
+
+export async function linkClientPortalFormAction(
+  _previousState: LinkPortalFormState,
+  formData: FormData,
+): Promise<LinkPortalFormState> {
+  const workspaceId = String(formData.get("workspaceId") ?? "");
+  const clientId = String(formData.get("clientId") ?? "");
+  const email = String(formData.get("email") ?? "");
+  const result = await linkClientPortalAccountAction(workspaceId, clientId, email);
+  return result.ok ? { success: "Portal account linked." } : { error: result.error.message };
+}
