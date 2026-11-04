@@ -51,6 +51,18 @@ flowchart TD
   Services --> Mail[Resend invitation email]
 ```
 
+## Review lifecycle
+
+```mermaid
+flowchart LR
+  Upload[Upload deliverable] --> Submit[Submit for client review]
+  Submit --> Decision{Client decision}
+  Decision -->|Approve| Approved[Approved version]
+  Decision -->|Request changes| Changes[Changes requested]
+  Changes --> Revision[Upload revised version]
+  Revision --> Submit
+```
+
 ## Local setup
 
 Requirements: Node.js 22+, npm, and Docker Desktop / Docker Engine.
