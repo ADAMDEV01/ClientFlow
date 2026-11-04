@@ -1,0 +1,3 @@
+CREATE TYPE "MilestoneStatus" AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED');
+ALTER TABLE "Milestone" ADD COLUMN "status" "MilestoneStatus" NOT NULL DEFAULT 'PENDING';
+ALTER TABLE "Project" ADD COLUMN "budget" DECIMAL(12,2);
