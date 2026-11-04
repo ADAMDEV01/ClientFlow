@@ -21,7 +21,6 @@ src/app/(app)/app/activity/page.tsx
 src/app/(app)/app/clients/page.tsx
 src/app/(app)/app/page.tsx
 src/app/(app)/app/projects/[projectId]/page.tsx
-src/app/(app)/app/projects/page.tsx
 src/app/(app)/app/settings/page.tsx
 src/app/(app)/app/team/page.tsx
 src/app/(app)/layout.tsx
