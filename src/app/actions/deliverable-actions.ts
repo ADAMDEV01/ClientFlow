@@ -133,5 +133,5 @@ export async function createNextVersionFormAction(
   const workspaceId = String(formData.get("workspaceId") ?? "");
   const deliverableId = String(formData.get("deliverableId") ?? "");
   const result = await createNextDeliverableVersionAction(workspaceId, deliverableId);
-  return result.ok ? { success: `Created draft version ${result.data.version}.` } : { error: result.error.message };
+  return result.ok ? { success: `Created draft version ${result.data.version}. Upload its updated file below.`, deliverableId: result.data.id } : { error: result.error.message };
 }

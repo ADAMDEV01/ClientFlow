@@ -204,3 +204,52 @@ export async function submitDeliverable(
     });
   });
 }
+
+export async function attachFileToDeliverable(
+  workspaceId: string,
+  actorId: string,
+  projectId: string,
+  deliverableId: string,
+  file: { fileKey: string; fileName: string; mimeType: string; sizeBytes: number },
+) {
+  const prisma = getPrisma();
+
+  return prisma.$transaction(async (tx) => {
+    const draft = await tx.deliverable.findFirst({
+      where: {
+        id: deliverableId,
+        workspaceId,
+        projectId,
+        status: "DRAFT",
+      },
+      select: { id: true },
+    });
+    if (!draft) throw new Error("Only a draft in this project can receive an upload.");
+
+    const updated = await tx.deliverable.updateMany({
+      where: { id: deliverableId, workspaceId, projectId, status: "DRAFT" },
+      data: {
+        fileKey: file.fileKey,
+        fileName: file.fileName,
+        mimeType: file.mimeType,
+        sizeBytes: file.sizeBytes,
+        revision: { increment: 1 },
+      },
+    });
+    if (updated.count !== 1) throw new Error("Deliverable changed while uploading.");
+
+    await writeActivity(tx, {
+      workspaceId,
+      actorId,
+      action: "UPLOADED",
+      entityType: "Deliverable",
+      entityId: deliverableId,
+      metadata: { sizeBytes: file.sizeBytes, mimeType: file.mimeType },
+    });
+
+    return tx.deliverable.findFirstOrThrow({
+      where: { id: deliverableId, workspaceId },
+      select: { id: true, name: true, version: true, status: true, revision: true },
+    });
+  });
+}

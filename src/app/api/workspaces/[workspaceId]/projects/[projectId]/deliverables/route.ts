@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { requireRole } from "@/server/authz";
-import { createDeliverable } from "@/server/services/deliverable-service";
+import { attachFileToDeliverable, createDeliverable } from "@/server/services/deliverable-service";
 import { getStorageProvider } from "@/server/storage";
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024;
@@ -25,6 +25,7 @@ export async function POST(
     const formData = await request.formData();
     const name = String(formData.get("name") ?? "");
     const description = String(formData.get("description") ?? "");
+    const deliverableId = String(formData.get("deliverableId") ?? "");
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
@@ -45,15 +46,20 @@ export async function POST(
     await storage.put({ key, contentType: file.type, bytes });
 
     try {
-      const deliverable = await createDeliverable(workspaceId, user.id, {
-        projectId,
-        name,
-        description: description || undefined,
+      const fileMetadata = {
         fileKey: key,
         fileName: safeDisplayName,
         mimeType: file.type,
         sizeBytes: file.size,
-      });
+      };
+      const deliverable = deliverableId
+        ? await attachFileToDeliverable(workspaceId, user.id, projectId, deliverableId, fileMetadata)
+        : await createDeliverable(workspaceId, user.id, {
+            projectId,
+            name,
+            description: description || undefined,
+            ...fileMetadata,
+          });
 
       return NextResponse.json({ data: deliverable }, { status: 201 });
     } catch (error) {

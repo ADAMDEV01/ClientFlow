@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { UploadDeliverableForm } from "@/app/components/upload-deliverable-form";
 import { createDeliverableFormAction, submitDeliverableFormAction, createNextVersionFormAction } from "@/app/actions/deliverable-actions";
 import {
   createClientFormAction,
@@ -107,11 +108,12 @@ export function TaskStatusForm({ workspaceId, taskId, status }: { workspaceId: s
   </form>;
 }
 
-export function CreateNextVersionForm({ workspaceId, deliverableId }: { workspaceId: string; deliverableId: string }) {
+export function CreateNextVersionForm({ workspaceId, projectId, deliverableId }: { workspaceId: string; projectId: string; deliverableId: string }) {
   const [state, action, pending] = useActionState(createNextVersionFormAction, initialState);
   return <form action={action} className="mt-3">
     <input type="hidden" name="workspaceId" value={workspaceId} /><input type="hidden" name="deliverableId" value={deliverableId} />
     <FormFeedback state={state} />
     <button disabled={pending} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold dark:border-slate-700">{pending ? "Creating…" : "Create next version"}</button>
+    {state.deliverableId ? <UploadDeliverableForm workspaceId={workspaceId} projectId={projectId} deliverableId={state.deliverableId} /> : null}
   </form>;
 }
