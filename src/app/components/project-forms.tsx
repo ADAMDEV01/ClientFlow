@@ -8,6 +8,8 @@ import {
   createTaskFormAction,
   createMilestoneFormAction,
   type ProjectFormState,
+  updateTaskStatusFormAction,
+  type TaskStatusFormState,
 } from "@/app/actions/project-actions";
 
 const initialState: ProjectFormState = {};
@@ -90,5 +92,17 @@ export function SubmitDeliverableForm({ workspaceId, deliverableId, revision }: 
     <input type="hidden" name="workspaceId" value={workspaceId} /><input type="hidden" name="deliverableId" value={deliverableId} /><input type="hidden" name="expectedRevision" value={revision} />
     <FormFeedback state={state} />
     <button disabled={pending} className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60">{pending ? "Submitting…" : "Submit for review"}</button>
+  </form>;
+}
+
+export function TaskStatusForm({ workspaceId, taskId, status }: { workspaceId: string; taskId: string; status: "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE" }) {
+  const [state, action, pending] = useActionState(updateTaskStatusFormAction, {} as TaskStatusFormState);
+  return <form action={action} className="flex items-center gap-2">
+    <input type="hidden" name="workspaceId" value={workspaceId} /><input type="hidden" name="taskId" value={taskId} />
+    <select name="status" defaultValue={status} aria-label="Task status" className="rounded-lg border border-slate-300 bg-transparent px-2 py-1 text-xs dark:border-slate-700">
+      <option value="TODO">To do</option><option value="IN_PROGRESS">In progress</option><option value="IN_REVIEW">In review</option><option value="DONE">Done</option>
+    </select>
+    <button disabled={pending} className="text-xs font-semibold text-indigo-600 disabled:opacity-60">{pending ? "Saving…" : "Save"}</button>
+    {state.error ? <span role="alert" className="text-xs text-red-600">{state.error}</span> : null}
   </form>;
 }

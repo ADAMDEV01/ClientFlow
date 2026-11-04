@@ -155,3 +155,17 @@ export async function linkClientPortalFormAction(
   const result = await linkClientPortalAccountAction(workspaceId, clientId, email);
   return result.ok ? { success: "Portal account linked." } : { error: result.error.message };
 }
+
+export type TaskStatusFormState = { error?: string; success?: string };
+
+export async function updateTaskStatusFormAction(
+  _previousState: TaskStatusFormState,
+  formData: FormData,
+): Promise<TaskStatusFormState> {
+  const workspaceId = String(formData.get("workspaceId") ?? "");
+  const result = await updateTaskStatusAction(workspaceId, {
+    taskId: formData.get("taskId"),
+    status: formData.get("status"),
+  });
+  return result.ok ? { success: "Task status updated." } : { error: result.error.message };
+}
