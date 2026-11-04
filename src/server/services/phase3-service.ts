@@ -3,6 +3,26 @@ import { getPrisma } from "@/lib/prisma";
 import { writeActivity } from "@/server/services/activity";
 import { clientInputSchema, projectInputSchema, milestoneInputSchema, taskInputSchema, roleChangeSchema, memberRemovalSchema } from "@/lib/validations/phase3";
 
+/**
+ * Retry PostgreSQL serialization failures. Concurrent owner mutations can
+ * otherwise both observe the same owner count and write different rows.
+ */
+async function withSerializableRetry<T>(operation: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      const code =
+        typeof error === "object" && error !== null && "code" in error
+          ? (error as { code?: unknown }).code
+          : undefined;
+      if (code !== "P2034" || attempt === 2) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 10 * (attempt + 1)));
+    }
+  }
+  throw new Error("Owner update could not be completed. Please retry.");
+}
+
 export async function saveClient(workspaceId: string, actorId: string, input: unknown, clientId?: string) {
   const data = clientInputSchema.parse(input); const db = getPrisma();
   return db.$transaction(async tx => {
@@ -94,31 +114,67 @@ export async function deleteTask(workspaceId: string, actorId: string, taskId: s
   });
 }
 export async function changeMemberRole(workspaceId: string, actorId: string, input: unknown) {
-  const data = roleChangeSchema.parse(input); const db = getPrisma();
-  return db.$transaction(async tx => {
-    const target = await tx.workspaceMember.findFirst({ where: { id: data.memberId, workspaceId }, select: { id: true, userId: true, role: true } });
-    if (!target) throw new Error("Member not found in this workspace.");
-    if (target.userId === actorId && data.role !== "OWNER") throw new Error("An owner cannot demote themselves.");
-    if (target.role === "OWNER" && data.role !== "OWNER") {
-      const owners = await tx.workspaceMember.count({ where: { workspaceId, role: "OWNER" } });
-      if (owners <= 1) throw new Error("The workspace must always have at least one owner.");
-    }
-    const updated = await tx.workspaceMember.update({ where: { id: target.id }, data: { role: data.role }, select: { id: true, role: true } });
-    await writeActivity(tx, { workspaceId, actorId, action: "UPDATED", entityType: "WorkspaceMember", entityId: target.id, metadata: { role: data.role } });
-    return updated;
-  });
+  const data = roleChangeSchema.parse(input);
+  const db = getPrisma();
+  return withSerializableRetry(() =>
+    db.$transaction(async (tx) => {
+      const target = await tx.workspaceMember.findFirst({
+        where: { id: data.memberId, workspaceId },
+        select: { id: true, userId: true, role: true },
+      });
+      if (!target) throw new Error("Member not found in this workspace.");
+      if (target.userId === actorId && data.role !== "OWNER") {
+        throw new Error("An owner cannot demote themselves.");
+      }
+      if (target.role === "OWNER" && data.role !== "OWNER") {
+        const owners = await tx.workspaceMember.count({ where: { workspaceId, role: "OWNER" } });
+        if (owners <= 1) throw new Error("The workspace must always have at least one owner.");
+      }
+      const updated = await tx.workspaceMember.update({
+        where: { id: target.id },
+        data: { role: data.role },
+        select: { id: true, role: true },
+      });
+      await writeActivity(tx, {
+        workspaceId,
+        actorId,
+        action: "UPDATED",
+        entityType: "WorkspaceMember",
+        entityId: target.id,
+        metadata: { role: data.role },
+      });
+      return updated;
+    }, { isolationLevel: "Serializable" }),
+  );
 }
 export async function removeWorkspaceMember(workspaceId: string, actorId: string, input: unknown) {
-  const data = memberRemovalSchema.parse(input); const db = getPrisma();
-  return db.$transaction(async tx => {
-    const target = await tx.workspaceMember.findFirst({ where: { id: data.memberId, workspaceId }, select: { id: true, userId: true, role: true } });
-    if (!target) throw new Error("Member not found in this workspace.");
-    if (target.userId === actorId) throw new Error("You cannot remove yourself from this workspace.");
-    if (target.role === "OWNER" && await tx.workspaceMember.count({ where: { workspaceId, role: "OWNER" } }) <= 1) throw new Error("The last owner cannot be removed.");
-    await tx.workspaceMember.delete({ where: { id: target.id } });
-    await writeActivity(tx, { workspaceId, actorId, action: "DELETED", entityType: "WorkspaceMember", entityId: target.id });
-    return { removed: true };
-  });
+  const data = memberRemovalSchema.parse(input);
+  const db = getPrisma();
+  return withSerializableRetry(() =>
+    db.$transaction(async (tx) => {
+      const target = await tx.workspaceMember.findFirst({
+        where: { id: data.memberId, workspaceId },
+        select: { id: true, userId: true, role: true },
+      });
+      if (!target) throw new Error("Member not found in this workspace.");
+      if (target.userId === actorId) throw new Error("You cannot remove yourself from this workspace.");
+      if (
+        target.role === "OWNER" &&
+        (await tx.workspaceMember.count({ where: { workspaceId, role: "OWNER" } })) <= 1
+      ) {
+        throw new Error("The last owner cannot be removed.");
+      }
+      await tx.workspaceMember.delete({ where: { id: target.id } });
+      await writeActivity(tx, {
+        workspaceId,
+        actorId,
+        action: "DELETED",
+        entityType: "WorkspaceMember",
+        entityId: target.id,
+      });
+      return { removed: true };
+    }, { isolationLevel: "Serializable" }),
+  );
 }
 export async function getProjectProgress(workspaceId: string, projectId: string) {
   const project = await getPrisma().project.findFirst({ where: { id: projectId, workspaceId }, select: { tasks: { select: { status: true } }, milestones: { select: { status: true } } } });
