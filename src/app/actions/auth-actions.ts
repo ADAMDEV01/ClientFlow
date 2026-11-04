@@ -105,7 +105,7 @@ export async function loginAction(
     await signIn("credentials", {
       email: parsed.data.email,
       password: parsed.data.password,
-      redirectTo: "/app",
+      redirectTo: (() => { const next = String(formData.get("next") ?? ""); return next.startsWith("/") && !next.startsWith("//") ? next : "/app"; })(),
     });
   } catch (error) {
     if (error instanceof AuthError) {

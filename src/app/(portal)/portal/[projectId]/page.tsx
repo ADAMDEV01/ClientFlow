@@ -24,7 +24,7 @@ export default async function ClientPortalPage({
         <p className="text-sm text-slate-500">Project overview</p>
         <h1 className="mt-2 text-3xl font-semibold">{project.name}</h1>
         {project.description ? <p className="mt-3 max-w-2xl text-slate-500">{project.description}</p> : null}
-        <p className="mt-4 text-sm text-slate-500">Status: {project.status.toLowerCase().replace("_", " ")}</p>
+        <p className="mt-4 text-sm text-slate-500">Status: {project.status.toLowerCase().replace("_", " ")}</p><div className="mt-5"><div className="mb-2 flex justify-between text-xs text-slate-500"><span>Project progress</span><span>{project.progress}%</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"><div className="h-full rounded-full bg-indigo-600" style={{ width: `${project.progress}%` }} /></div></div>
       </header>
       <section className="mt-9">
         <h2 className="text-xl font-semibold">Milestones</h2>

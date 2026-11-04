@@ -80,3 +80,12 @@ export const taskStatusSchema = z.object({
   taskId: cuidSchema,
   status: z.enum(["TODO", "IN_PROGRESS", "IN_REVIEW", "DONE"]),
 });
+
+export const clientPortalInvitationSchema = z.object({
+  clientId: cuidSchema,
+});
+
+export const clientPortalRegistrationSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  password: z.string().min(12, "Use at least 12 characters.").max(128),
+});
