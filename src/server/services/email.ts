@@ -40,10 +40,51 @@ export async function sendInvitationEmail(input: InvitationEmail): Promise<boole
   }
 }
 
+function parseAppOrigin(value: string, variableName: string): string {
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw new Error(
+      `Invalid ${variableName}: expected an absolute http:// or https:// application URL.`,
+    );
+  }
+
+  if (
+    (parsed.protocol !== "http:" && parsed.protocol !== "https:") ||
+    !parsed.hostname ||
+    parsed.username ||
+    parsed.password
+  ) {
+    throw new Error(
+      `Invalid ${variableName}: expected an absolute http:// or https:// URL without credentials.`,
+    );
+  }
+
+  return parsed.origin;
+}
+
 export function getAppBaseUrl(): string {
-  const configured = process.env.NEXT_PUBLIC_APP_URL ?? process.env.AUTH_URL;
-  if (configured) return new URL(configured).origin;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  const configured = [
+    ["NEXT_PUBLIC_APP_URL", process.env.NEXT_PUBLIC_APP_URL],
+    ["AUTH_URL", process.env.AUTH_URL],
+  ] as const;
+
+  const selected = configured.find(([, value]) => value?.trim());
+  if (selected) {
+    const [variableName, value] = selected;
+    return parseAppOrigin(value!.trim(), variableName);
+  }
+
+  const vercelUrl = process.env.VERCEL_URL?.trim();
+  if (vercelUrl) return parseAppOrigin(`https://${vercelUrl}`, "VERCEL_URL");
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "Missing application URL: set NEXT_PUBLIC_APP_URL or AUTH_URL in the production environment.",
+    );
+  }
+
   return "http://localhost:3000";
 }
 

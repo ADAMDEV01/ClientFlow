@@ -15,6 +15,7 @@ function hashToken(token: string) {
 
 export async function createClientPortalInvitation(workspaceId: string, actorId: string, input: unknown) {
   const data = clientPortalInvitationSchema.parse(input);
+  const appBaseUrl = getAppBaseUrl();
   const allowed = await consumeRateLimit(`client-invite:${workspaceId}:${actorId}`, 10, 60 * 60);
   if (!allowed) throw new Error("Invitation rate limit reached. Try again later.");
   const prisma = getPrisma();
@@ -36,7 +37,7 @@ export async function createClientPortalInvitation(workspaceId: string, actorId:
     await writeActivity(tx, { workspaceId, actorId, action: "INVITED", entityType: "ClientInvitation", entityId: row.id, metadata: { clientId: client.id, email: row.email } });
     return row;
   });
-  const url = new URL(`/client-invite/${token}`, getAppBaseUrl()).toString();
+  const url = new URL(`/client-invite/${token}`, appBaseUrl).toString();
   const emailSent = await sendInvitationEmail({
     to: client.email,
     subject: "Your ClientFlow portal invitation",

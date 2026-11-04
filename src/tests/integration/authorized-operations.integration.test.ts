@@ -16,6 +16,8 @@ import {
   submitClientReviewAction, addClientDeliverableCommentAction, addTeamDeliverableCommentAction,
 } from "@/app/actions/deliverable-actions";
 import { createInvitationAction } from "@/app/actions/invitation-actions";
+import { createClientPortalInvitationAction } from "@/app/actions/client-invitation-actions";
+import { registerAndAcceptClientInvitation } from "@/server/services/client-invitation-service";
 
 const prisma = getPrisma();
 const suffix = crypto.randomUUID();
@@ -23,6 +25,7 @@ let ownerId = "";
 let clientUserId = "";
 let workspaceId = "";
 let clientId = "";
+const createdClientPortalUserIds: string[] = [];
 
 beforeAll(async () => {
   const owner = await prisma.user.create({
@@ -63,7 +66,7 @@ afterAll(async () => {
     await prisma.review.deleteMany({ where: { workspaceId, clientId } });
     await prisma.workspace.delete({ where: { id: workspaceId } });
   }
-  await prisma.user.deleteMany({ where: { id: { in: [ownerId, clientUserId].filter(Boolean) } } });
+  await prisma.user.deleteMany({ where: { id: { in: [ownerId, clientUserId, ...createdClientPortalUserIds].filter(Boolean) } } });
   await prisma.$disconnect();
 });
 
@@ -164,6 +167,25 @@ describe("authorized server actions persist successful operations", () => {
     expect(await prisma.client.findUnique({ where: { id: createdClient.data.id } })).toBeNull();
   });
 
+  it("rejects an invalid app URL before persisting an invitation", async () => {
+    authMock.mockResolvedValue({ user: { id: ownerId, role: "OWNER" } });
+    const email = `invalid-url-invite-${suffix}@test.example`;
+    const previousUrl = process.env.NEXT_PUBLIC_APP_URL;
+    process.env.NEXT_PUBLIC_APP_URL = "not-a-valid-url";
+
+    try {
+      const result = await createInvitationAction(workspaceId, { email, role: "MEMBER" });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.message).toContain("Invalid NEXT_PUBLIC_APP_URL");
+      }
+      expect(await prisma.invitation.count({ where: { workspaceId, email } })).toBe(0);
+    } finally {
+      if (previousUrl === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
+      else process.env.NEXT_PUBLIC_APP_URL = previousUrl;
+    }
+  });
+
   it("creates invitations and verifies the raw token is not persisted", async () => {
     authMock.mockResolvedValue({ user: { id: ownerId, role: "OWNER" } });
     const result = await createInvitationAction(workspaceId, {
@@ -185,6 +207,44 @@ describe("authorized server actions persist successful operations", () => {
     });
     expect(saved.tokenHash).not.toBe(result.data.token);
     expect(saved.tokenHash).toHaveLength(64);
+  });
+
+  it("creates and accepts a client portal invitation with a single-use token", async () => {
+    authMock.mockResolvedValue({ user: { id: ownerId, role: "OWNER" } });
+    const client = await prisma.client.create({
+      data: {
+        workspaceId,
+        name: "Invitation Acceptance Client",
+        email: `client-acceptance-${suffix}@test.example`,
+      },
+      select: { id: true },
+    });
+
+    const invitation = await createClientPortalInvitationAction(workspaceId, {
+      clientId: client.id,
+    });
+    expect(invitation.ok).toBe(true);
+    if (!invitation.ok) throw new Error(invitation.error.message);
+    expect(invitation.data.emailSent).toBe(false);
+    expect(invitation.data.invitationUrl).toContain("/client-invite/");
+
+    const accepted = await registerAndAcceptClientInvitation(invitation.data.token, {
+      name: "Accepted Portal User",
+      password: "valid-integration-password-123",
+    });
+    createdClientPortalUserIds.push(accepted.userId);
+
+    const savedClient = await prisma.client.findUniqueOrThrow({
+      where: { id: client.id },
+      select: { userId: true },
+    });
+    const savedInvitation = await prisma.clientInvitation.findFirstOrThrow({
+      where: { clientId: client.id },
+      select: { status: true, acceptedAt: true },
+    });
+    expect(savedClient.userId).toBe(accepted.userId);
+    expect(savedInvitation.status).toBe("ACCEPTED");
+    expect(savedInvitation.acceptedAt).toBeInstanceOf(Date);
   });
 
   it("runs the complete deliverable review and revision lifecycle with persisted state", async () => {
