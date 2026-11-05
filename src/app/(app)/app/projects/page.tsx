@@ -76,9 +76,7 @@ export default async function ProjectsPage({
         ← Dashboard
       </Link>
       <h1 className="mt-5 text-3xl font-semibold">Projects</h1>
-      <p className="mt-2 text-slate-500">
-        Projects belonging to this workspace.
-      </p>
+      <p className="mt-2 text-slate-500">Projects belonging to this workspace.</p>
       <div className="mt-8 grid gap-6 lg:grid-cols-[320px_1fr]">
         <CreateProjectForm
           workspaceId={workspaceId}
@@ -99,9 +97,7 @@ export default async function ProjectsPage({
                       {project.status.toLowerCase()}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-slate-500">
-                    {project.client.name}
-                  </p>
+                  <p className="mt-2 text-sm text-slate-500">{project.client.name}</p>
                   <div className="mt-6 flex gap-5 text-xs text-slate-500">
                     <span>{project._count.tasks} tasks</span>
                     <span>{project._count.deliverables} deliverables</span>
