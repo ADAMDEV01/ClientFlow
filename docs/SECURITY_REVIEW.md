@@ -14,7 +14,7 @@ rate limiting, uploads/downloads, response headers, and secret configuration.
 | Rate limiting | Database-backed atomic fixed-window counters cover credential login, registration, client invitations, and uploads. | PostgreSQL concurrency test verifies the configured limit under parallel calls. |
 | File upload | Uploads are limited to 4 MB, allowlisted MIME types/extensions, checked against file signatures, stored under generated opaque keys, and removed if metadata persistence fails. Downloads require authenticated workspace/client access and return attachment, private/no-store, and nosniff headers. | Full lifecycle Playwright test uploads a PDF. |
 | Session handling | Auth.js uses JWT sessions; authorization guards re-check current workspace membership in the database instead of trusting a workspace ID supplied by the browser. | Unit and PostgreSQL authorization tests. |
-| Security headers | X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, and production HSTS are configured; powered-by header is disabled. | Next.js configuration review. |
+| Security headers | X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, production HSTS, and a per-request nonce-based Content-Security-Policy are configured; powered-by header is disabled. | Next.js configuration and middleware review. |
 | Secrets | The environment example contains placeholders only. Production object-storage credentials and Auth secret are read server-side; CI uses disposable test-only credentials. | Repository configuration review. |
 
 ## Finding and hardening applied
@@ -29,8 +29,8 @@ rate limiting, uploads/downloads, response headers, and secret configuration.
 - Before deploying the `Client.userId` unique-index migration, install dependencies and generate the Prisma client with `npm ci` and `npm run db:generate`, then run `npm run db:preflight:client-user-unique` against the exact target database. The command exits non-zero and lists duplicate user IDs if a user is linked to multiple client profiles. Resolve duplicates deliberately, rerun the preflight until it reports zero duplicates, then run `npm run db:deploy`. The preflight is read-only; the migration does not unlink or delete client data. Do not run the migration if the preflight cannot connect or reports duplicates.
 - Configure shared durable rate-limit storage for horizontally scaled production instances. The current PostgreSQL limiter is shared when all instances use the same database.
 - Configure RESEND_API_KEY and RESEND_FROM_EMAIL for real invitation email delivery.
-- The current upload signature check verifies file headers, not full PDF/image parsing or DOCX/XLSX archive contents. Files are downloaded as attachments and are not rendered inline. Add malware scanning and archive expansion limits before accepting untrusted files at larger scale.
-- A Content-Security-Policy is not enabled yet. Add a nonce-based policy compatible with the deployed Next.js/Auth.js runtime and verify it against the production build before enforcement.
+- The current upload signature check verifies file headers, not full PDF/image parsing or DOCX/XLSX archive contents. There is no ZIP central-directory inspection, archive-entry count limit, decompressed-size limit, compression-ratio limit, or malware scan. The 4 MB request limit constrains compressed upload bytes only and does not prevent a small archive from expanding dramatically. Files are downloaded as attachments and are not rendered inline. Archive-bomb detection and malware scanning are explicitly out of scope until a dedicated scanning pipeline is added.
+- The nonce-based CSP is enforced for document routes. Keep the policy under review when adding third-party scripts, analytics, embedded media, or external asset hosts; update the allowlist deliberately and verify the production browser console after each integration.
 - HSTS is emitted only in production; enable it only when the production domain and all subdomains are HTTPS-ready.
 - CI validates against disposable PostgreSQL and local test storage; it does not prove production S3, email, DNS, or hosting secrets are configured.
 
@@ -42,4 +42,4 @@ rate limiting, uploads/downloads, response headers, and secret configuration.
 - [ ] Resend sender domain is verified and delivery is tested.
 - [ ] Production database backups and restore procedure are verified.
 - [ ] Malware scanning and archive inspection are enabled if required by the threat model.
-- [ ] CSP is tested and enforced after nonce integration.
+- [ ] Verify CSP reports/console output on the deployed domain and add only required third-party origins.

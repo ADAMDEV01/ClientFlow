@@ -5,7 +5,7 @@ import { actionFailure, actionSuccess } from "@/server/action-result";
 import {
   saveClient, deleteClient, saveProject, deleteProject, saveMilestone,
   deleteMilestone, saveTask, deleteTask, changeMemberRole, removeWorkspaceMember,
-} from "@/server/services/phase3-service";
+} from "@/server/services/project-management-service";
 
 async function run(
   workspaceId: string,
@@ -54,9 +54,9 @@ export async function removeWorkspaceMemberAction(workspaceId: string, input: un
   return run(workspaceId, ["OWNER"], actor => removeWorkspaceMember(workspaceId, actor, input));
 }
 
-export type Phase3FormState = { error?: string; success?: string };
+export type ProjectManagementFormState = { error?: string; success?: string };
 
-export async function createProjectPhase3FormAction(_prev: Phase3FormState, fd: FormData): Promise<Phase3FormState> {
+export async function createProjectFormAction(_prev: ProjectManagementFormState, fd: FormData): Promise<ProjectManagementFormState> {
   const workspaceId = String(fd.get("workspaceId") ?? "");
   const result = await saveProjectAction(workspaceId, {
     name: fd.get("name"), description: fd.get("description") || undefined, clientId: fd.get("clientId"),
@@ -65,7 +65,7 @@ export async function createProjectPhase3FormAction(_prev: Phase3FormState, fd: 
   });
   return result.ok ? { success: "Project created." } : { error: result.error.message };
 }
-export async function createTaskPhase3FormAction(_prev: Phase3FormState, fd: FormData): Promise<Phase3FormState> {
+export async function createTaskFormAction(_prev: ProjectManagementFormState, fd: FormData): Promise<ProjectManagementFormState> {
   const workspaceId = String(fd.get("workspaceId") ?? "");
   const result = await saveTaskAction(workspaceId, {
     projectId: fd.get("projectId"), title: fd.get("title"), description: fd.get("description") || undefined,
@@ -74,7 +74,7 @@ export async function createTaskPhase3FormAction(_prev: Phase3FormState, fd: For
   });
   return result.ok ? { success: "Task created." } : { error: result.error.message };
 }
-export async function createMilestonePhase3FormAction(_prev: Phase3FormState, fd: FormData): Promise<Phase3FormState> {
+export async function createMilestoneFormAction(_prev: ProjectManagementFormState, fd: FormData): Promise<ProjectManagementFormState> {
   const workspaceId = String(fd.get("workspaceId") ?? "");
   const position = fd.get("position");
   const result = await saveMilestoneAction(workspaceId, {

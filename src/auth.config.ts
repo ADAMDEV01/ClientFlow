@@ -7,6 +7,10 @@ export const authConfig = {
   pages: { signIn: "/login" },
   providers: [],
   callbacks: {
+    // Route authorization is handled in src/middleware.ts so public pages can receive a CSP nonce too.
+    authorized() {
+      return true;
+    },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = String(token.userId ?? token.sub ?? "");

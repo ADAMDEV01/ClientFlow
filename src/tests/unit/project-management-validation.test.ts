@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { clientInputSchema, milestoneInputSchema, projectInputSchema, roleChangeSchema, taskInputSchema } from "@/lib/validations/phase3";
+import { clientInputSchema, milestoneInputSchema, projectInputSchema, roleChangeSchema, taskInputSchema } from "@/lib/validations/project-management";
 
 const cuid = "c123456789012345678901234";
 
-describe("phase 3 validation", () => {
+describe("project management validation", () => {
   it("normalizes client email and trims names", () => {
     expect(clientInputSchema.parse({ name: "  Acme  ", email: " SALES@ACME.COM " })).toMatchObject({ name: "Acme", email: "sales@acme.com" });
   });

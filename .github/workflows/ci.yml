@@ -46,10 +46,13 @@ jobs:
       - run: npm run db:generate
       - run: npm run db:deploy
       - run: npm run db:seed
+      - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:unit
       - run: npm run build
+      - run: docker compose config --quiet
+      - run: docker build --tag clientflow:ci .
 
   integration:
     name: PostgreSQL integration tests
@@ -117,3 +120,36 @@ jobs:
       - run: npm run db:seed
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - name: Build production bundle for Lighthouse
+        run: npm run build
+        env:
+          NODE_ENV: production
+      - name: Start production server for Lighthouse
+        run: |
+          npm run start > /tmp/clientflow-lighthouse.log 2>&1 &
+          echo $! > /tmp/clientflow-lighthouse.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000 > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/clientflow-lighthouse.log
+          exit 1
+        env:
+          NODE_ENV: production
+      - name: Run Lighthouse audit
+        run: |
+          CHROME_PATH="$(find "$HOME/.cache/ms-playwright" -type f -name chrome -perm -u+x | head -n 1)"
+          if [ -z "$CHROME_PATH" ]; then
+            echo "Playwright Chromium executable not found."
+            exit 1
+          fi
+          CHROME_PATH="$CHROME_PATH" npx --yes lighthouse@13.6.0 http://127.0.0.1:3000 --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --only-categories=performance,accessibility,best-practices,seo --output=html --output-path=./lighthouse-report.html --quiet
+      - name: Upload Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clientflow-lighthouse-report
+          path: lighthouse-report.html
+          if-no-files-found: ignore

@@ -9,9 +9,9 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/prisma", () => ({ getPrisma: getPrismaMock }));
 vi.mock("@/server/services/activity", () => ({ writeActivity: writeActivityMock }));
 
-import { changeMemberRole, removeWorkspaceMember } from "@/server/services/phase3-service";
+import { changeMemberRole, removeWorkspaceMember } from "@/server/services/project-management-service";
 
-describe("phase 3 team ownership invariants", () => {
+describe("project management team ownership invariants", () => {
   const workspaceId = "workspace-a";
   const actorId = "owner-a";
   const memberId = "c123456789012345678901234";

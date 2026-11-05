@@ -10,10 +10,10 @@ import {
   type TaskStatusFormState,
 } from "@/app/actions/project-actions";
 import {
-  createProjectPhase3FormAction,
-  createTaskPhase3FormAction,
-  createMilestonePhase3FormAction,
-} from "@/app/actions/phase3-actions";
+  createProjectFormAction,
+  createTaskFormAction,
+  createMilestoneFormAction,
+} from "@/app/actions/project-management-actions";
 
 const initialState: ProjectFormState = {};
 
@@ -37,7 +37,7 @@ export function CreateClientForm({ workspaceId }: { workspaceId: string }) {
 }
 
 export function CreateProjectForm({ workspaceId, clients, members = [] }: { workspaceId: string; clients: { id: string; name: string }[]; members?: { userId: string; name: string | null; email: string }[] }) {
-  const [state, action, pending] = useActionState(createProjectPhase3FormAction, initialState);
+  const [state, action, pending] = useActionState(createProjectFormAction, initialState);
   return <form action={action} className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
     <input type="hidden" name="workspaceId" value={workspaceId} />
     <h2 className="font-semibold">Create a project</h2>
@@ -55,7 +55,7 @@ export function CreateProjectForm({ workspaceId, clients, members = [] }: { work
 }
 
 export function CreateTaskForm({ workspaceId, projectId, members = [] }: { workspaceId: string; projectId: string; members?: { userId: string; name: string | null; email: string }[] }) {
-  const [state, action, pending] = useActionState(createTaskPhase3FormAction, initialState);
+  const [state, action, pending] = useActionState(createTaskFormAction, initialState);
   return <form action={action} className="grid gap-3 rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
     <input type="hidden" name="workspaceId" value={workspaceId} />
     <input type="hidden" name="projectId" value={projectId} />
@@ -73,7 +73,7 @@ export function CreateTaskForm({ workspaceId, projectId, members = [] }: { works
 }
 
 export function CreateMilestoneForm({ workspaceId, projectId }: { workspaceId: string; projectId: string }) {
-  const [state, action, pending] = useActionState(createMilestonePhase3FormAction, initialState);
+  const [state, action, pending] = useActionState(createMilestoneFormAction, initialState);
   return <form action={action} className="grid gap-3 rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
     <input type="hidden" name="workspaceId" value={workspaceId} /><input type="hidden" name="projectId" value={projectId} />
     <h2 className="font-semibold">Add a milestone</h2>

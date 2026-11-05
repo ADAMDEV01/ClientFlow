@@ -1,6 +1,6 @@
 "use client";
 import { useState, useTransition } from "react";
-import { changeMemberRoleAction, removeWorkspaceMemberAction } from "@/app/actions/phase3-actions";
+import { changeMemberRoleAction, removeWorkspaceMemberAction } from "@/app/actions/project-management-actions";
 
 type Role = "OWNER" | "ADMIN" | "MEMBER";
 export function TeamMemberControls({ workspaceId, member, canManage, ownerCount = 1 }: { workspaceId: string; ownerCount?: number; member: { id: string; role: Role; userId: string; name: string | null; email: string }; canManage: boolean }) {

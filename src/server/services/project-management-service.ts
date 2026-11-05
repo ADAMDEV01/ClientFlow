@@ -1,7 +1,7 @@
 import "server-only";
 import { getPrisma } from "@/lib/prisma";
 import { writeActivity } from "@/server/services/activity";
-import { clientInputSchema, projectInputSchema, milestoneInputSchema, taskInputSchema, roleChangeSchema, memberRemovalSchema } from "@/lib/validations/phase3";
+import { clientInputSchema, projectInputSchema, milestoneInputSchema, taskInputSchema, roleChangeSchema, memberRemovalSchema } from "@/lib/validations/project-management";
 
 /**
  * Retry PostgreSQL serialization failures. Concurrent owner mutations can

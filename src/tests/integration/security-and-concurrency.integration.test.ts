@@ -8,7 +8,7 @@ vi.mock("@/server/services/notification", () => ({ notifyDeliverable: vi.fn().mo
 import { getPrisma } from "@/lib/prisma";
 import { AuthzError, requireClientProjectAccess, requireRole, requireWorkspaceMember, type TeamRole } from "@/server/authz";
 import { submitDeliverable } from "@/server/services/deliverable-service";
-import { removeWorkspaceMember } from "@/server/services/phase3-service";
+import { removeWorkspaceMember } from "@/server/services/project-management-service";
 
 const prisma = getPrisma();
 const suffix = crypto.randomUUID();

@@ -5,8 +5,8 @@ import { getPrisma } from "@/lib/prisma";
 import { requireWorkspaceMember } from "@/server/authz";
 import { CreateTaskForm, CreateMilestoneForm, CreateDeliverableForm, SubmitDeliverableForm, TaskStatusForm, CreateNextVersionForm } from "@/app/components/project-forms";
 import { UploadDeliverableForm } from "@/app/components/upload-deliverable-form";
-import { getProjectProgress } from "@/server/services/phase3-service";
-import { MilestoneRecordControls, TaskRecordControls } from "@/app/components/phase3-record-controls";
+import { getProjectProgress } from "@/server/services/project-management-service";
+import { MilestoneRecordControls, TaskRecordControls } from "@/app/components/record-controls";
 import { addTeamDeliverableCommentAction } from "@/app/actions/deliverable-actions";
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ projectId: string }> }) {
