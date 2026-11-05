@@ -67,8 +67,8 @@ export default async function ProjectsPage({
   const projects = hasMore ? projectRows.slice(0, 50) : projectRows;
   const nextCursor = hasMore ? projects[projects.length - 1]?.id : undefined;
   const nextHref = nextCursor
-  ? `/app/projects?cursor=${encodeURIComponent(nextCursor)}`
-  : null;
+    ? `/app/projects?cursor=${encodeURIComponent(nextCursor)}`
+    : null;
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
