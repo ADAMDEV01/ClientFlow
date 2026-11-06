@@ -84,7 +84,7 @@ npm run db:deploy
 The first run must apply every committed migration. The second run must complete without pending migrations. To inspect the resulting schema, use:
 
 ```powershell
-docker compose exec -T postgres psql -U clientflow -d clientflow_test -c "\\dt"
+docker compose exec -T postgres psql -U clientflow -d clientflow_test -c "\dt"
 ```
 
 ## 5. Run the remaining local quality checks
