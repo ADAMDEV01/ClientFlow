@@ -54,4 +54,5 @@ Keep `AUTH_SECRET` configured as a strong random secret and `AUTH_URL` set to th
 4. Upload a small allowed file and download it as an authorized user.
 5. Confirm a user from another workspace cannot access that file.
 6. Invite a client and verify the client portal acceptance flow.
-7. Review runtime logs for provider/storage errors without logging secrets or invitation tokens.\n8. Confirm the scheduled rate-limit cleanup workflow is enabled and its manual run succeeds.
+7. Review runtime logs for provider/storage errors without logging secrets or invitation tokens.
+8. Confirm the scheduled rate-limit cleanup workflow is enabled and its manual run succeeds.
