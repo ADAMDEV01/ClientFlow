@@ -14,7 +14,9 @@ describe("workspace activity filter options", () => {
     vi.clearAllMocks();
   });
 
-  it("loads every project and distinct actors without scanning activity rows in memory", async () => {
+  it(
+    "loads every project and distinct actors without scanning activity rows in memory",
+    async () => {
     const projects = [
       { id: "project-a", name: "Alpha" },
       { id: "project-b", name: "Beta" },
@@ -44,5 +46,6 @@ describe("workspace activity filter options", () => {
         { id: "user-b", label: "zoe@example.com" },
       ],
     });
-  });
+    },
+  );
 });
