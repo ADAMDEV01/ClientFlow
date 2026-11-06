@@ -89,11 +89,16 @@ describe("Office archive inspection", () => {
     expect(() => inspectOfficeArchive(validDocx(), "docx")).not.toThrow();
   });
 
-  it("rejects a local filename that differs from the central directory", () => {
+  it(
+    "rejects a local filename that differs from the central directory",
+    () => {
     const archive = Buffer.from(validDocx());
     archive[30] = archive[30] === 0x5b ? 0x58 : 0x5b;
-    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(/filename does not match/);
-  });
+      expect(() => inspectOfficeArchive(archive, "docx")).toThrow(
+        /filename does not match/,
+      );
+    },
+  );
 
   it("rejects local and central directory flag mismatches", () => {
     const archive = Buffer.from(validDocx());
@@ -104,10 +109,13 @@ describe("Office archive inspection", () => {
   });
 
   it("accepts entries that use a valid signed data descriptor", () => {
-    const archive = makeZip([
-      { name: "[Content_Types].xml", data: "<Types/>" },
-      { name: "word/document.xml", data: "<document/>" },
-    ], { dataDescriptor: true });
+    const archive = makeZip(
+      [
+        { name: "[Content_Types].xml", data: "<Types/>" },
+        { name: "word/document.xml", data: "<document/>" },
+      ],
+      { dataDescriptor: true },
+    );
     expect(() => inspectOfficeArchive(archive, "docx")).not.toThrow();
   });
 
