@@ -4,7 +4,6 @@ import { getPrisma } from "@/lib/prisma";
 import { deliverableDecisionSchema } from "@/lib/validations/common";
 import { writeActivity } from "@/server/services/activity";
 import { transitionDeliverable } from "@/server/services/deliverable-state";
-import { notifyDeliverable } from "@/server/services/notification";
 
 export async function decideDeliverable(
   input: unknown,
@@ -74,13 +73,6 @@ export async function decideDeliverable(
     });
 
     return { id: deliverable.id, status: data.decision, version: deliverable.version };
-  });
-  await notifyDeliverable({
-    event: data.decision,
-    workspaceId: data.workspaceId,
-    deliverableId: result.id,
-    version: result.version,
-    actorId,
   });
   return { id: result.id, status: result.status };
 }
@@ -224,7 +216,6 @@ export async function submitDeliverable(
       select: { id: true, status: true, revision: true, submittedAt: true, version: true },
     });
   });
-  await notifyDeliverable({ event: "SUBMITTED", workspaceId, deliverableId, version: result.version, actorId });
   return result;
 }
 
