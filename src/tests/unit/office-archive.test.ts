@@ -76,15 +76,13 @@ describe("Office archive inspection", () => {
 
   it("rejects a missing required Office entry", () => {
     const archive = makeZip([{ name: "random.txt", data: "x" }]);
-    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(
-      /required Office entry/,
-    );
+    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(/required Office entry/);
   });
 
   it("rejects a truncated archive", () => {
-    expect(() =>
-      inspectOfficeArchive(new Uint8Array([1, 2, 3]), "docx"),
-    ).toThrow(/truncated/);
+    expect(() => inspectOfficeArchive(new Uint8Array([1, 2, 3]), "docx")).toThrow(
+      /truncated/,
+    );
   });
 
   it("rejects unsafe traversal paths", () => {
@@ -93,9 +91,7 @@ describe("Office archive inspection", () => {
       { name: "word/../evil.xml", data: "x" },
       { name: "word/document.xml", data: "x" },
     ]);
-    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(
-      /unsafe entry path/,
-    );
+    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(/unsafe entry path/);
   });
 
   it("rejects excessive compression ratios", () => {
@@ -104,8 +100,6 @@ describe("Office archive inspection", () => {
       { name: "[Content_Types].xml", data: "x" },
       { name: "word/document.xml", data: highlyCompressible },
     ]);
-    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(
-      /compression ratio/,
-    );
+    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(/compression ratio/);
   });
 });
