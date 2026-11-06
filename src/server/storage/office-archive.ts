@@ -198,7 +198,9 @@ export function inspectOfficeArchive(
         localCompressedSize !== compressedSize ||
         localExpandedSize !== expandedSize
       ) {
-        reject("local header sizes or checksum do not match the central directory.");
+        reject(
+          "local header sizes or checksum do not match the central directory.",
+        );
       }
 
       let rangeEnd = dataEnd;
