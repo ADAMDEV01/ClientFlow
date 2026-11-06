@@ -49,21 +49,31 @@ export async function getWorkspaceActivityOptions(workspaceId: string) {
   const prisma = getPrisma();
   const [projects, members] = await Promise.all([
     prisma.project.findMany({
-      where: { workspaceId }, orderBy: [{ name: "asc" }, { id: "asc" }],
+      where: { workspaceId },
+      orderBy: [{ name: "asc" }, { id: "asc" }],
       select: { id: true, name: true },
     }),
-    prisma.activity.findMany({
-      where: { workspaceId, actorId: { not: null } },
-      distinct: ["actorId"], orderBy: { createdAt: "desc" },
-      select: { actorId: true, actor: { select: { name: true, email: true } } },
-    }),
+    prisma.$queryRaw<
+      Array<{ actorId: string; name: string | null; email: string | null }>
+    >`
+      SELECT DISTINCT ON (a."actorId")
+        a."actorId", u.name, u.email
+      FROM "Activity" a
+      JOIN "User" u ON u.id = a."actorId"
+      WHERE a."workspaceId" = ${workspaceId}
+        AND a."actorId" IS NOT NULL
+      ORDER BY a."actorId", a."createdAt" DESC, a.id DESC
+    `,
   ]);
 
   return {
     projects,
-    actors: members.flatMap(({ actorId, actor }) =>
-      actorId && actor ? [{ id: actorId, label: actor.name ?? actor.email }] : [],
-    ),
+    actors: members
+      .map(({ actorId, name, email }) => ({
+        id: actorId,
+        label: name ?? email ?? "Unknown user",
+      }))
+      .sort((left, right) => left.label.localeCompare(right.label)),
   };
 }
 
