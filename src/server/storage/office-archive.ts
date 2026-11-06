@@ -31,7 +31,10 @@ function reject(message: string): never {
 }
 
 /** Inspect an Office Open XML ZIP without extracting files to disk. */
-export function inspectOfficeArchive(input: Uint8Array, kind: "docx" | "xlsx"): void {
+export function inspectOfficeArchive(
+  input: Uint8Array,
+  kind: "docx" | "xlsx",
+): void {
   const bytes = Buffer.from(input.buffer, input.byteOffset, input.byteLength);
   if (bytes.length < 22) reject("archive is truncated.");
 
@@ -68,7 +71,10 @@ export function inspectOfficeArchive(input: Uint8Array, kind: "docx" | "xlsx"): 
   if (entryCount < 1 || entryCount > LIMITS.entries) {
     reject("entry count exceeds the configured limit.");
   }
-  if (centralOffset + centralSize > eocd || centralOffset + centralSize < centralOffset) {
+  if (
+    centralOffset + centralSize > eocd ||
+    centralOffset + centralSize < centralOffset
+  ) {
     reject("central directory is out of bounds.");
   }
 
@@ -167,7 +173,9 @@ export function inspectOfficeArchive(input: Uint8Array, kind: "docx" | "xlsx"): 
         reject("compressed entry data is out of bounds.");
       }
       const localName = bytes.toString("utf8", localOffset + 30, localNameEnd);
-      if (localName !== name) reject("local header filename does not match the central directory.");
+      if (localName !== name) {
+        reject("local header filename does not match the central directory.");
+      }
       if (localFlags !== flags) {
         reject("local header flags do not match the central directory.");
       }
@@ -179,7 +187,9 @@ export function inspectOfficeArchive(input: Uint8Array, kind: "docx" | "xlsx"): 
           (localCrc !== 0 && localCrc !== expectedCrc) ||
           (localCompressedSize !== 0 && localCompressedSize !== compressedSize) ||
           (localExpandedSize !== 0 && localExpandedSize !== expandedSize)
-        ) reject("local header values conflict with the data descriptor.");
+        ) {
+          reject("local header values conflict with the data descriptor.");
+        }
       } else if (
         localCrc !== expectedCrc ||
         localCompressedSize !== compressedSize ||
