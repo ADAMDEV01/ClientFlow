@@ -145,7 +145,7 @@ Configure these environment variables in Vercel (or the deployment environment):
 
 The production storage adapter uses server-side credentials and does not expose object URLs publicly. Downloads are streamed through an authenticated Route Handler.
 
-Uploads currently allow PDF, PNG, JPEG, WebP, DOCX, and XLSX files up to 4 MB. File names are sanitized for display; object keys are generated server-side. DOCX/XLSX ZIP contents are not inspected for decompressed-size, entry-count, or compression-ratio limits, and malware scanning is not implemented; treat archive inspection as out of scope for this demo.
+Uploads currently allow PDF, PNG, JPEG, WebP, DOCX, and XLSX files up to 4 MB. File names are sanitized for display; object keys are generated server-side. DOCX/XLSX archives are inspected without extracting to disk: encrypted, malformed, multi-disk, ZIP64, duplicate-path, traversal, and symlink entries are rejected; archives are limited to 1,000 entries, 16 MB per expanded entry, 32 MB total expanded data, and a 100:1 compression ratio. Malware scanning is not implemented in this release. Treat uploaded files as untrusted and keep downloads attachment-only; enable a dedicated malware-scanning pipeline before accepting sensitive or high-risk uploads.
 
 ## Quality checks
 
@@ -157,7 +157,11 @@ npm run test:e2e
 npm run build
 ```
 
-GitHub Actions runs three independent jobs: quality/build, PostgreSQL integration tests, and Playwright E2E. The quality job also checks Prettier formatting with `npm run format:check`. E2E includes axe-core WCAG 2.1 A/AA checks and uploads a Lighthouse report covering performance, accessibility, best practices, and SEO.
+GitHub Actions runs three independent jobs: quality/build, PostgreSQL integration tests, and Playwright E2E. The quality job also checks Prettier formatting with `npm run format:check`. E2E includes axe-core WCAG 2.1 A/AA checks and uploads a Lighthouse report covering performance, accessibility, best practices, and SEO. A separate daily workflow removes expired rate-limit buckets in bounded batches; configure the `PRODUCTION_DATABASE_URL` GitHub Actions secret to enable it.
+
+## Notifications
+
+Deliverable notification events are not enabled in this release. The former logging-only provider stub and its call sites were removed so the application does not imply that email or in-app notifications are being delivered. Invitation email delivery remains a separate optional Resend integration.
 
 ## Design decisions
 

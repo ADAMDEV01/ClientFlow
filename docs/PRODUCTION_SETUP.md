@@ -38,11 +38,15 @@ Create a Resend API key and verify the sending domain in Resend. Add:
 
 Without Resend configuration, invitation creation still returns a single-use URL for manual delivery. If Resend is temporarily unavailable or rejects a send, the invitation link remains available and the UI reports that the email was not sent. Invitation tokens are stored as SHA-256 hashes, not plaintext.
 
-## 4. Authentication
+## 4. Expired rate-limit cleanup
 
-Keep `AUTH_SECRET` configured as a strong random secret and `AUTH_URL` set to the canonical application URL. Never expose secrets in client-side variables, source control, logs, or support messages.
+The repository includes a daily GitHub Actions workflow at 03:17 UTC and a manual `workflow_dispatch` trigger. Add a repository Actions secret named `PRODUCTION_DATABASE_URL` containing the production PostgreSQL connection string. The workflow runs `npm ci`, generates the Prisma client, and deletes expired `RateLimitBucket` rows in batches of at most 10,000 using row locks with `SKIP LOCKED`; active buckets are not eligible for deletion. Run the workflow manually once after adding the secret and confirm it completes successfully. Do not expose the connection string in workflow logs.
 
-## 5. Post-deployment verification
+## 5. Authentication
+
+Generate a unique `AUTH_SECRET` with at least 32 random bytes (for example, `openssl rand -base64 32`). Set `AUTH_URL` to the canonical production origin using `https://`. When invitation email is enabled, set `NEXT_PUBLIC_APP_URL` to that same canonical HTTPS origin. Never expose secrets in client-side variables, source control, logs, or support messages.
+
+## 6. Post-deployment verification
 
 1. Confirm the Production deployment is Ready.
 2. Verify `/login` and `/register` return successfully.
@@ -51,3 +55,4 @@ Keep `AUTH_SECRET` configured as a strong random secret and `AUTH_URL` set to th
 5. Confirm a user from another workspace cannot access that file.
 6. Invite a client and verify the client portal acceptance flow.
 7. Review runtime logs for provider/storage errors without logging secrets or invitation tokens.
+8. Confirm the scheduled rate-limit cleanup workflow is enabled and its manual run succeeds.

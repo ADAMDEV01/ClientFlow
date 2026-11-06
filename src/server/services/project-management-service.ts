@@ -177,10 +177,24 @@ export async function removeWorkspaceMember(workspaceId: string, actorId: string
   );
 }
 export async function getProjectProgress(workspaceId: string, projectId: string) {
-  const project = await getPrisma().project.findFirst({ where: { id: projectId, workspaceId }, select: { tasks: { select: { status: true } }, milestones: { select: { status: true } } } });
+  const prisma = getPrisma();
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, workspaceId },
+    select: { id: true },
+  });
   if (!project) throw new Error("Project not found in this workspace.");
-  const total = project.tasks.length + project.milestones.length;
+
+  const [totalTasks, completedTasks, totalMilestones, completedMilestones] =
+    await Promise.all([
+      prisma.task.count({ where: { workspaceId, projectId } }),
+      prisma.task.count({ where: { workspaceId, projectId, status: "DONE" } }),
+      prisma.milestone.count({ where: { workspaceId, projectId } }),
+      prisma.milestone.count({
+        where: { workspaceId, projectId, status: "COMPLETED" },
+      }),
+    ]);
+
+  const total = totalTasks + totalMilestones;
   if (!total) return 0;
-  const done = project.tasks.filter(t => t.status === "DONE").length + project.milestones.filter(m => m.status === "COMPLETED").length;
-  return Math.round((done / total) * 100);
+  return Math.round(((completedTasks + completedMilestones) / total) * 100);
 }

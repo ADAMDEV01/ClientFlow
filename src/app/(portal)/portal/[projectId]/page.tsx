@@ -30,14 +30,14 @@ export default async function ClientPortalPage({
         <h2 className="text-xl font-semibold">Milestones</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {project.milestones.map((milestone) => <article key={milestone.id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-800"><h3 className="font-medium">{milestone.name}</h3><p className="mt-2 text-sm text-slate-500">{milestone.status.toLowerCase().replace("_", " ")}{milestone.dueDate ? ` · Due ${milestone.dueDate.toLocaleDateString()}` : ""}</p></article>)}
-          {!project.milestones.length ? <p className="text-sm text-slate-500">No milestones have been shared yet.</p> : null}
+          {!project.milestones.length ? <p className="text-sm text-slate-500">No milestones have been shared yet.</p> : project.milestones.length === 100 ? <p className="text-xs text-slate-500">Showing up to 100 milestones.</p> : null}
         </div>
       </section>
       <section className="mt-9">
         <h2 className="text-xl font-semibold">Shared tasks</h2>
         <div className="mt-4 divide-y divide-slate-200 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
           {project.tasks.map((task) => <div key={task.id} className="flex items-center justify-between gap-4 px-4 py-3"><div><p className="font-medium">{task.title}</p><p className="text-xs text-slate-500">{task.dueDate ? `Due ${task.dueDate.toLocaleDateString()}` : "No due date"}</p></div><span className="text-xs text-slate-500">{task.status.toLowerCase().replace("_", " ")}</span></div>)}
-          {!project.tasks.length ? <p className="p-4 text-sm text-slate-500">No shared tasks yet.</p> : null}
+          {!project.tasks.length ? <p className="p-4 text-sm text-slate-500">No shared tasks yet.</p> : project.tasks.length === 50 ? <p className="p-4 text-xs text-slate-500">Showing the latest 50 shared tasks.</p> : null}
         </div>
       </section>
       <section className="mt-9">
@@ -65,7 +65,7 @@ export default async function ClientPortalPage({
               <div className="flex flex-wrap gap-2"><button name="decision" value="APPROVED" className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">Approve</button><button name="decision" value="CHANGES_REQUESTED" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold dark:border-slate-700">Request changes</button></div>
             </form> : null}
           </article>)}
-          {!project.deliverables.length ? <p className="text-sm text-slate-500">No deliverables have been shared yet.</p> : null}
+          {!project.deliverables.length ? <p className="text-sm text-slate-500">No deliverables have been shared yet.</p> : project.deliverables.length === 50 ? <p className="text-xs text-slate-500">Showing up to 50 shared deliverables.</p> : null}
         </div>
       </section>
     </main>

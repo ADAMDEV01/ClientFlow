@@ -20,7 +20,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:seed": "prisma db seed",
-    "db:preflight:client-user-unique": "tsx scripts/preflight-client-user-unique.ts"
+    "db:preflight:client-user-unique": "tsx scripts/preflight-client-user-unique.ts",
+    "rate-limit:cleanup": "tsx scripts/cleanup-rate-limit.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",

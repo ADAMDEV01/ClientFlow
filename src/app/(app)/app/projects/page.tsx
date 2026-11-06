@@ -44,11 +44,14 @@ export default async function ProjectsPage({
     prisma.client.findMany({
       where: { workspaceId },
       orderBy: { name: "asc" },
+      take: 100,
       select: { id: true, name: true },
     }),
     prisma.workspaceMember
       .findMany({
         where: { workspaceId },
+        orderBy: { userId: "asc" },
+        take: 100,
         select: {
           userId: true,
           user: { select: { name: true, email: true } },
