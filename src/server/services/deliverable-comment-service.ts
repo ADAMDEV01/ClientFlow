@@ -2,7 +2,6 @@ import "server-only";
 
 import { getPrisma } from "@/lib/prisma";
 import { writeActivity } from "@/server/services/activity";
-import { notifyDeliverable } from "@/server/services/notification";
 
 export async function addDeliverableComment(input: {
   workspaceId: string;
@@ -14,7 +13,7 @@ export async function addDeliverableComment(input: {
   const body = input.body.trim();
   if (!body || body.length > 4000) throw new Error("Comment must be between 1 and 4000 characters.");
   const prisma = getPrisma();
-  const result = await prisma.$transaction(async tx => {
+  return prisma.$transaction(async tx => {
     const deliverable = await tx.deliverable.findFirst({
       where: {
         id: input.deliverableId,
@@ -45,14 +44,6 @@ export async function addDeliverableComment(input: {
       entityId: deliverable.id,
       metadata: { version: deliverable.version, commentId: comment.id },
     });
-    return { comment, version: deliverable.version };
+    return comment;
   });
-  await notifyDeliverable({
-    event: "COMMENTED",
-    workspaceId: input.workspaceId,
-    deliverableId: input.deliverableId,
-    version: result.version,
-    actorId: input.actorId,
-  });
-  return result.comment;
 }
