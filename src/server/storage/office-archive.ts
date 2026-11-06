@@ -180,12 +180,15 @@ export function inspectOfficeArchive(
         reject("local header flags do not match the central directory.");
       }
       if (localMethod !== method) {
-        reject("local header compression method does not match the central directory.");
+        reject(
+          "local header compression method does not match the central directory.",
+        );
       }
       if (flags & 0x0008) {
         if (
           (localCrc !== 0 && localCrc !== expectedCrc) ||
-          (localCompressedSize !== 0 && localCompressedSize !== compressedSize) ||
+          (localCompressedSize !== 0 &&
+            localCompressedSize !== compressedSize) ||
           (localExpandedSize !== 0 && localExpandedSize !== expandedSize)
         ) {
           reject("local header values conflict with the data descriptor.");
@@ -195,7 +198,9 @@ export function inspectOfficeArchive(
         localCompressedSize !== compressedSize ||
         localExpandedSize !== expandedSize
       ) {
-        reject("local header sizes or checksum do not match the central directory.");
+        reject(
+          "local header sizes or checksum do not match the central directory.",
+        );
       }
 
       let rangeEnd = dataEnd;
@@ -212,7 +217,9 @@ export function inspectOfficeArchive(
           reject("data descriptor is truncated.");
         }
         const descriptorCrc = bytes.readUInt32LE(descriptorOffset);
-        const descriptorCompressedSize = bytes.readUInt32LE(descriptorOffset + 4);
+        const descriptorCompressedSize = bytes.readUInt32LE(
+          descriptorOffset + 4,
+        );
         const descriptorExpandedSize = bytes.readUInt32LE(descriptorOffset + 8);
         if (
           descriptorCrc !== expectedCrc ||
