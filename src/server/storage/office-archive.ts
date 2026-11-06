@@ -75,6 +75,7 @@ export function inspectOfficeArchive(input: Uint8Array, kind: "docx" | "xlsx"): 
   let cursor = centralOffset;
   let totalExpanded = 0;
   const names = new Set<string>();
+  const localRanges: Array<{ start: number; end: number }> = [];
 
   for (let index = 0; index < entryCount; index += 1) {
     if (
@@ -147,13 +148,56 @@ export function inspectOfficeArchive(input: Uint8Array, kind: "docx" | "xlsx"): 
         reject("local file header is malformed.");
       }
 
+      const localFlags = bytes.readUInt16LE(localOffset + 6);
+      const localMethod = bytes.readUInt16LE(localOffset + 8);
+      const localCrc = bytes.readUInt32LE(localOffset + 14);
+      const localCompressedSize = bytes.readUInt32LE(localOffset + 18);
+      const localExpandedSize = bytes.readUInt32LE(localOffset + 22);
       const localNameLength = bytes.readUInt16LE(localOffset + 26);
       const localExtraLength = bytes.readUInt16LE(localOffset + 28);
-      const dataStart = localOffset + 30 + localNameLength + localExtraLength;
+      const localNameEnd = localOffset + 30 + localNameLength;
+      const dataStart = localNameEnd + localExtraLength;
       const dataEnd = dataStart + compressedSize;
-      if (dataStart < localOffset || dataEnd > centralOffset || dataEnd < dataStart) {
+      if (localNameEnd > centralOffset || dataStart < localOffset || dataEnd > centralOffset || dataEnd < dataStart) {
         reject("compressed entry data is out of bounds.");
       }
+      const localName = bytes.toString("utf8", localOffset + 30, localNameEnd);
+      if (localName !== name) reject("local header filename does not match the central directory.");
+      if (localFlags !== flags) reject("local header flags do not match the central directory.");
+      if (localMethod !== method) reject("local header compression method does not match the central directory.");
+      if (flags & 0x0008) {
+        if (
+          (localCrc !== 0 && localCrc !== expectedCrc) ||
+          (localCompressedSize !== 0 && localCompressedSize !== compressedSize) ||
+          (localExpandedSize !== 0 && localExpandedSize !== expandedSize)
+        ) reject("local header values conflict with the data descriptor.");
+      } else if (
+        localCrc !== expectedCrc ||
+        localCompressedSize !== compressedSize ||
+        localExpandedSize !== expandedSize
+      ) {
+        reject("local header sizes or checksum do not match the central directory.");
+      }
+
+      let rangeEnd = dataEnd;
+      if (flags & 0x0008) {
+        // Data descriptors may optionally begin with the signature 0x08074b50.
+        let descriptorOffset = dataEnd;
+        if (descriptorOffset + 4 <= centralOffset && bytes.readUInt32LE(descriptorOffset) === 0x08074b50) {
+          descriptorOffset += 4;
+        }
+        if (descriptorOffset + 12 > centralOffset) reject("data descriptor is truncated.");
+        const descriptorCrc = bytes.readUInt32LE(descriptorOffset);
+        const descriptorCompressedSize = bytes.readUInt32LE(descriptorOffset + 4);
+        const descriptorExpandedSize = bytes.readUInt32LE(descriptorOffset + 8);
+        if (
+          descriptorCrc !== expectedCrc ||
+          descriptorCompressedSize !== compressedSize ||
+          descriptorExpandedSize !== expandedSize
+        ) reject("data descriptor does not match the central directory.");
+        rangeEnd = descriptorOffset + 12;
+      }
+      localRanges.push({ start: localOffset, end: rangeEnd });
 
       const compressed = bytes.subarray(dataStart, dataEnd);
       let expanded: Buffer;
@@ -181,6 +225,12 @@ export function inspectOfficeArchive(input: Uint8Array, kind: "docx" | "xlsx"): 
 
   if (cursor !== centralOffset + centralSize) {
     reject("central directory size does not match its entries.");
+  }
+  localRanges.sort((left, right) => left.start - right.start);
+  for (let index = 1; index < localRanges.length; index += 1) {
+    if (localRanges[index].start < localRanges[index - 1].end) {
+      reject("local file data ranges overlap.");
+    }
   }
 
   const required =
