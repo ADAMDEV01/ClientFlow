@@ -68,10 +68,7 @@ export function inspectOfficeArchive(input: Uint8Array, kind: "docx" | "xlsx"): 
   if (entryCount < 1 || entryCount > LIMITS.entries) {
     reject("entry count exceeds the configured limit.");
   }
-  if (
-    centralOffset + centralSize > eocd ||
-    centralOffset + centralSize < centralOffset
-  ) {
+  if (centralOffset + centralSize > eocd || centralOffset + centralSize < centralOffset) {
     reject("central directory is out of bounds.");
   }
 
@@ -154,11 +151,7 @@ export function inspectOfficeArchive(input: Uint8Array, kind: "docx" | "xlsx"): 
       const localExtraLength = bytes.readUInt16LE(localOffset + 28);
       const dataStart = localOffset + 30 + localNameLength + localExtraLength;
       const dataEnd = dataStart + compressedSize;
-      if (
-        dataStart < localOffset ||
-        dataEnd > centralOffset ||
-        dataEnd < dataStart
-      ) {
+      if (dataStart < localOffset || dataEnd > centralOffset || dataEnd < dataStart) {
         reject("compressed entry data is out of bounds.");
       }
 
@@ -178,10 +171,7 @@ export function inspectOfficeArchive(input: Uint8Array, kind: "docx" | "xlsx"): 
         reject("entry decompression failed or exceeded its limit.");
       }
 
-      if (
-        expanded.length !== expandedSize ||
-        crc32(expanded) !== expectedCrc
-      ) {
+      if (expanded.length !== expandedSize || crc32(expanded) !== expectedCrc) {
         reject("entry size or checksum is invalid.");
       }
     }
