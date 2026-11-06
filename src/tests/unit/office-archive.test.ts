@@ -94,6 +94,32 @@ describe("Office archive inspection", () => {
     expect(() => inspectOfficeArchive(archive, "docx")).toThrow(/unsafe entry path/);
   });
 
+
+  it("rejects an archive with too many entries", () => {
+    const entries = Array.from({ length: 1_001 }, (_, index) => ({
+      name: `entry-${index}.xml`,
+      data: "x",
+    }));
+    const archive = makeZip(entries);
+    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(/entry count/);
+  });
+
+  it("rejects an entry whose declared expanded size exceeds the limit", () => {
+    const archive = Buffer.from(validDocx());
+    const endRecord = archive.length - 22;
+    const centralOffset = archive.readUInt32LE(endRecord + 16);
+    archive.writeUInt32LE(16 * 1024 * 1024 + 1, centralOffset + 24);
+    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(/expanded-size limit/);
+  });
+
+  it("accepts a structurally valid XLSX archive", () => {
+    const archive = makeZip([
+      { name: "[Content_Types].xml", data: "<Types/>" },
+      { name: "xl/workbook.xml", data: "<workbook/>" },
+    ]);
+    expect(() => inspectOfficeArchive(archive, "xlsx")).not.toThrow();
+  });
+
   it("rejects excessive compression ratios", () => {
     const highlyCompressible = "a".repeat(10_000);
     const archive = makeZip([
