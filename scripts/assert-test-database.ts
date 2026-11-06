@@ -5,7 +5,9 @@
 const rawUrl = process.env.DATABASE_URL;
 
 if (!rawUrl) {
-  console.error("Test database safety check failed: DATABASE_URL is not set.");
+  console.error(
+    "Test database safety check failed: DATABASE_URL is not set.",
+  );
   process.exit(1);
 }
 
@@ -13,7 +15,9 @@ let databaseUrl: URL;
 try {
   databaseUrl = new URL(rawUrl);
 } catch {
-  console.error("Test database safety check failed: DATABASE_URL is not a valid URL.");
+  console.error(
+    "Test database safety check failed: DATABASE_URL is not a valid URL.",
+  );
   process.exit(1);
 }
 
@@ -26,7 +30,9 @@ const dedicatedTestDatabase =
   /(?:^|[_-])(test|integration|e2e)(?:$|[_-])/.test(databaseName);
 
 if (!["postgres:", "postgresql:"].includes(databaseUrl.protocol)) {
-  console.error("Test database safety check failed: only PostgreSQL test databases are supported.");
+  console.error(
+    "Test database safety check failed: only PostgreSQL test databases are supported.",
+  );
   process.exit(1);
 }
 
@@ -37,4 +43,6 @@ if (!localHosts.has(host) || !dedicatedTestDatabase) {
   process.exit(1);
 }
 
-console.log(`Test database safety check passed (local database: ${databaseName}).`);
+console.log(
+  `Test database safety check passed (local database: ${databaseName}).`,
+);
