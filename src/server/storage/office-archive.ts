@@ -31,10 +31,7 @@ function reject(message: string): never {
 }
 
 /** Inspect an Office Open XML ZIP without extracting files to disk. */
-export function inspectOfficeArchive(
-  input: Uint8Array,
-  kind: "docx" | "xlsx",
-): void {
+export function inspectOfficeArchive(input: Uint8Array, kind: "docx" | "xlsx"): void {
   const bytes = Buffer.from(input.buffer, input.byteOffset, input.byteLength);
   if (bytes.length < 22) reject("archive is truncated.");
 
@@ -71,10 +68,7 @@ export function inspectOfficeArchive(
   if (entryCount < 1 || entryCount > LIMITS.entries) {
     reject("entry count exceeds the configured limit.");
   }
-  if (
-    centralOffset + centralSize > eocd ||
-    centralOffset + centralSize < centralOffset
-  ) {
+  if (centralOffset + centralSize > eocd || centralOffset + centralSize < centralOffset) {
     reject("central directory is out of bounds.");
   }
 
@@ -180,15 +174,12 @@ export function inspectOfficeArchive(
         reject("local header flags do not match the central directory.");
       }
       if (localMethod !== method) {
-        reject(
-          "local header compression method does not match the central directory.",
-        );
+        reject("local header compression method does not match the central directory.");
       }
       if (flags & 0x0008) {
         if (
           (localCrc !== 0 && localCrc !== expectedCrc) ||
-          (localCompressedSize !== 0 &&
-            localCompressedSize !== compressedSize) ||
+          (localCompressedSize !== 0 && localCompressedSize !== compressedSize) ||
           (localExpandedSize !== 0 && localExpandedSize !== expandedSize)
         ) {
           reject("local header values conflict with the data descriptor.");
@@ -198,9 +189,7 @@ export function inspectOfficeArchive(
         localCompressedSize !== compressedSize ||
         localExpandedSize !== expandedSize
       ) {
-        reject(
-          "local header sizes or checksum do not match the central directory.",
-        );
+        reject("local header sizes or checksum do not match the central directory.");
       }
 
       let rangeEnd = dataEnd;
@@ -217,9 +206,7 @@ export function inspectOfficeArchive(
           reject("data descriptor is truncated.");
         }
         const descriptorCrc = bytes.readUInt32LE(descriptorOffset);
-        const descriptorCompressedSize = bytes.readUInt32LE(
-          descriptorOffset + 4,
-        );
+        const descriptorCompressedSize = bytes.readUInt32LE(descriptorOffset + 4);
         const descriptorExpandedSize = bytes.readUInt32LE(descriptorOffset + 8);
         if (
           descriptorCrc !== expectedCrc ||
@@ -276,3 +263,4 @@ export function inspectOfficeArchive(
     }
   }
 }
+
