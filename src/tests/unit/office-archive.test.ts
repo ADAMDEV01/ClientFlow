@@ -104,9 +104,7 @@ describe("Office archive inspection", () => {
     const endRecord = archive.length - 22;
     const centralOffset = archive.readUInt32LE(endRecord + 16);
     archive.writeUInt16LE(0x0800, centralOffset + 8);
-    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(
-      /flags do not match/,
-    );
+    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(/flags do not match/);
   });
 
   it("accepts entries that use a valid signed data descriptor", () => {
@@ -133,9 +131,7 @@ describe("Office archive inspection", () => {
 
   it("rejects a missing required Office entry", () => {
     const archive = makeZip([{ name: "random.txt", data: "x" }]);
-    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(
-      /required Office entry/,
-    );
+    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(/required Office entry/);
   });
 
   it("rejects a truncated archive", () => {
@@ -167,9 +163,7 @@ describe("Office archive inspection", () => {
     const endRecord = archive.length - 22;
     const centralOffset = archive.readUInt32LE(endRecord + 16);
     archive.writeUInt32LE(16 * 1024 * 1024 + 1, centralOffset + 24);
-    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(
-      /expanded-size limit/,
-    );
+    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(/expanded-size limit/);
   });
 
   it("accepts a structurally valid XLSX archive", () => {
