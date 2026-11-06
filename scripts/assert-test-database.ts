@@ -18,9 +18,12 @@ try {
 }
 
 const host = databaseUrl.hostname.toLowerCase();
-const databaseName = decodeURIComponent(databaseUrl.pathname.slice(1)).toLowerCase();
+const databaseName = decodeURIComponent(
+  databaseUrl.pathname.slice(1),
+).toLowerCase();
 const localHosts = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
-const dedicatedTestDatabase = /(?:^|[_-])(test|integration|e2e)(?:$|[_-])/.test(databaseName);
+const dedicatedTestDatabase =
+  /(?:^|[_-])(test|integration|e2e)(?:$|[_-])/.test(databaseName);
 
 if (!["postgres:", "postgresql:"].includes(databaseUrl.protocol)) {
   console.error("Test database safety check failed: only PostgreSQL test databases are supported.");
