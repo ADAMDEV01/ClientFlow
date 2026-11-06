@@ -2,11 +2,12 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 
-const url = process.env.DATABASE_URL;
-if (!url) {
-  console.error("DATABASE_URL is required for the target database.");
-  process.exitCode = 1;
-} else {
+async function main() {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error("DATABASE_URL is required for the target database.");
+  }
+
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
   try {
     const duplicates = await prisma.$queryRaw<Array<{ userId: string; profileCount: bigint }>>`
@@ -33,3 +34,9 @@ if (!url) {
     await prisma.$disconnect();
   }
 }
+
+void main().catch((error: unknown) => {
+  console.error("Preflight FAILED: could not initialize the target database check.");
+  console.error(error instanceof Error ? error.message : error);
+  process.exitCode = 1;
+});
