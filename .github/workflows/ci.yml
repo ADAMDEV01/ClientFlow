@@ -46,7 +46,7 @@ jobs:
       - run: npm run db:generate
       - run: npm run db:deploy
       - run: npm run db:seed
-      - run: npx prettier --write scripts/cleanup-rate-limit.ts src/server/storage/office-archive.ts src/tests/unit/office-archive.test.ts && git diff -- scripts/cleanup-rate-limit.ts src/server/storage/office-archive.ts src/tests/unit/office-archive.test.ts && npm run format:check
+      - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:unit
