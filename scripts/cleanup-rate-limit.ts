@@ -18,8 +18,7 @@ if (!connectionString) {
 
     while (true) {
       const deleted = await prisma.$executeRaw`
-        DELETE FROM "RateLimitBucket"
-        WHERE "key" IN (
+        WITH expired AS (
           SELECT "key"
           FROM "RateLimitBucket"
           WHERE "resetAt" <= ${cutoff}
@@ -27,6 +26,9 @@ if (!connectionString) {
           LIMIT 10000
           FOR UPDATE SKIP LOCKED
         )
+        DELETE FROM "RateLimitBucket" AS bucket
+        USING expired
+        WHERE bucket."key" = expired."key"
       `;
       totalDeleted += Number(deleted);
       if (Number(deleted) < 10000) break;
