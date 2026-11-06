@@ -4,6 +4,7 @@ import { requireRole } from "@/server/authz";
 import { attachFileToDeliverable, createDeliverable } from "@/server/services/deliverable-service";
 import { getStorageProvider } from "@/server/storage";
 import { consumeRateLimit } from "@/server/services/rate-limit";
+import { inspectOfficeArchive } from "@/server/storage/office-archive";
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024;
 const ALLOWED_TYPES = new Set([
@@ -120,6 +121,14 @@ export async function POST(
       : false;
     if (!validSignature) {
       return NextResponse.json({ error: "The file content does not match its declared type." }, { status: 415 });
+    }
+    if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+      try { inspectOfficeArchive(bytes, "docx"); }
+      catch { return NextResponse.json({ error: "The DOCX archive is malformed or exceeds safe archive limits." }, { status: 415 }); }
+    }
+    if (file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
+      try { inspectOfficeArchive(bytes, "xlsx"); }
+      catch { return NextResponse.json({ error: "The XLSX archive is malformed or exceeds safe archive limits." }, { status: 415 }); }
     }
     const storage = getStorageProvider();
 
