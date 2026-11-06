@@ -47,6 +47,14 @@ jobs:
       - run: npm run db:deploy
       - run: npm run db:seed
       - run: npm run rate-limit:cleanup
+      - name: Temporary Prettier formatting capture
+        run: |
+          npx prettier --write src/server/storage/office-archive.ts src/tests/unit/office-archive.test.ts src/tests/unit/analytics.test.ts
+          for file in src/server/storage/office-archive.ts src/tests/unit/office-archive.test.ts src/tests/unit/analytics.test.ts; do
+            echo "===== FORMATTED FILE: $file ====="
+            cat "$file"
+            echo "===== END FILE: $file ====="
+          done
       - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck
