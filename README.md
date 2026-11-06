@@ -65,6 +65,8 @@ flowchart LR
 
 ## Local setup
 
+For isolated PostgreSQL integration and E2E testing on Windows, follow [Local testing](docs/LOCAL_TESTING.md). The integration and E2E commands block non-local or non-test databases.
+
 Requirements: Node.js 22+, npm, and Docker Desktop / Docker Engine.
 
 1. Start the local PostgreSQL database:
