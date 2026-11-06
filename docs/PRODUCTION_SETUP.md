@@ -44,7 +44,7 @@ The repository includes a daily GitHub Actions workflow at 03:17 UTC and a manua
 
 ## 5. Authentication
 
-Keep `AUTH_SECRET` configured as a strong random secret and `AUTH_URL` set to the canonical application URL. Never expose secrets in client-side variables, source control, logs, or support messages.
+Generate a unique `AUTH_SECRET` with at least 32 random bytes (for example, `openssl rand -base64 32`). Set `AUTH_URL` to the canonical production origin using `https://`. When invitation email is enabled, set `NEXT_PUBLIC_APP_URL` to that same canonical HTTPS origin. Never expose secrets in client-side variables, source control, logs, or support messages.
 
 ## 6. Post-deployment verification
 
