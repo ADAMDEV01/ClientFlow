@@ -3,11 +3,12 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  console.error("DATABASE_URL is required for RateLimit cleanup.");
-  process.exitCode = 1;
-} else {
+async function main() {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is required for RateLimit cleanup.");
+  }
+
   const prisma = new PrismaClient({
     adapter: new PrismaPg({ connectionString }),
   });
@@ -35,11 +36,13 @@ if (!connectionString) {
     }
 
     console.log(`RateLimit cleanup completed. Deleted ${totalDeleted} expired buckets.`);
-  } catch (error) {
-    console.error("RateLimit cleanup failed.");
-    console.error(error instanceof Error ? error.message : error);
-    process.exitCode = 1;
   } finally {
     await prisma.$disconnect();
   }
 }
+
+void main().catch((error: unknown) => {
+  console.error("RateLimit cleanup failed.");
+  console.error(error instanceof Error ? error.message : error);
+  process.exitCode = 1;
+});
