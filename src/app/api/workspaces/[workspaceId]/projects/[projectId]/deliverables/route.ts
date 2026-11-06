@@ -123,12 +123,24 @@ export async function POST(
       return NextResponse.json({ error: "The file content does not match its declared type." }, { status: 415 });
     }
     if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-      try { inspectOfficeArchive(bytes, "docx"); }
-      catch { return NextResponse.json({ error: "The DOCX archive is malformed or exceeds safe archive limits." }, { status: 415 }); }
+      try {
+        inspectOfficeArchive(bytes, "docx");
+      } catch {
+        return NextResponse.json(
+          { error: "The DOCX archive is malformed or exceeds safe archive limits." },
+          { status: 415 },
+        );
+      }
     }
     if (file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
-      try { inspectOfficeArchive(bytes, "xlsx"); }
-      catch { return NextResponse.json({ error: "The XLSX archive is malformed or exceeds safe archive limits." }, { status: 415 }); }
+      try {
+        inspectOfficeArchive(bytes, "xlsx");
+      } catch {
+        return NextResponse.json(
+          { error: "The XLSX archive is malformed or exceeds safe archive limits." },
+          { status: 415 },
+        );
+      }
     }
     const storage = getStorageProvider();
 
