@@ -32,9 +32,7 @@ if (!connectionString) {
       if (Number(deleted) < 10000) break;
     }
 
-    console.log(
-      `RateLimit cleanup completed. Deleted ${totalDeleted} expired buckets.`,
-    );
+    console.log(`RateLimit cleanup completed. Deleted ${totalDeleted} expired buckets.`);
   } catch (error) {
     console.error("RateLimit cleanup failed.");
     console.error(error instanceof Error ? error.message : error);
