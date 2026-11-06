@@ -92,8 +92,8 @@ describe("Office archive inspection", () => {
   it(
     "rejects a local filename that differs from the central directory",
     () => {
-    const archive = Buffer.from(validDocx());
-    archive[30] = archive[30] === 0x5b ? 0x58 : 0x5b;
+      const archive = Buffer.from(validDocx());
+      archive[30] = archive[30] === 0x5b ? 0x58 : 0x5b;
       expect(() => inspectOfficeArchive(archive, "docx")).toThrow(
         /filename does not match/,
       );
