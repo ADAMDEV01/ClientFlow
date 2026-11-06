@@ -12,9 +12,7 @@ const test = /(^|[_-])(test|integration|e2e)($|[_-])/.test(dbName);
 const postgres = ["postgres:", "postgresql:"].includes(url.protocol);
 
 if (!postgres || !local || !test) {
-  throw new Error(
-    "Database tests require a dedicated local PostgreSQL test database.",
-  );
+  throw new Error("Database tests require a dedicated local PostgreSQL test database.");
 }
 
 console.log(`Database test guard passed for ${dbName}.`);
