@@ -7,7 +7,7 @@ import { inspectOfficeArchive } from "@/server/storage/office-archive";
 
 function makeZip(
   entries: Array<{ name: string; data: string }>,
-  options: { dataDescriptor?: boolean } = {},
+  options: { dataDescriptor?: boolean; signedDescriptor?: boolean } = {},
 ): Uint8Array {
   const locals: Buffer[] = [];
   const centrals: Buffer[] = [];
@@ -30,11 +30,13 @@ function makeZip(
     name.copy(local, 30);
     const descriptor = options.dataDescriptor
       ? (() => {
-          const value = Buffer.alloc(16);
-          value.writeUInt32LE(0x08074b50, 0);
-          value.writeUInt32LE(crc, 4);
-          value.writeUInt32LE(compressed.length, 8);
-          value.writeUInt32LE(data.length, 12);
+          const signed = options.signedDescriptor !== false;
+          const value = Buffer.alloc(signed ? 16 : 12);
+          const start = signed ? 4 : 0;
+          if (signed) value.writeUInt32LE(0x08074b50, 0);
+          value.writeUInt32LE(crc, start);
+          value.writeUInt32LE(compressed.length, start + 4);
+          value.writeUInt32LE(data.length, start + 8);
           return value;
         })()
       : Buffer.alloc(0);
@@ -117,6 +119,17 @@ describe("Office archive inspection", () => {
         { name: "word/document.xml", data: "<document/>" },
       ],
       { dataDescriptor: true },
+    );
+    expect(() => inspectOfficeArchive(archive, "docx")).not.toThrow();
+  });
+
+  it("accepts entries that use a valid unsigned data descriptor", () => {
+    const archive = makeZip(
+      [
+        { name: "[Content_Types].xml", data: "<Types/>" },
+        { name: "word/document.xml", data: "<document/>" },
+      ],
+      { dataDescriptor: true, signedDescriptor: false },
     );
     expect(() => inspectOfficeArchive(archive, "docx")).not.toThrow();
   });
