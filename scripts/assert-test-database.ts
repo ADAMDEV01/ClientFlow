@@ -5,10 +5,10 @@ if (!raw) {
 }
 
 const url = new URL(raw);
-const name = decodeURIComponent(url.pathname.slice(1)).toLowerCase();
+const dbName = decodeURIComponent(url.pathname.slice(1)).toLowerCase();
 const host = url.hostname.toLowerCase();
 const local = ["localhost", "127.0.0.1", "::1", "[::1]"].includes(host);
-const test = /(^|[_-])(test|integration|e2e)($|[_-])/.test(name);
+const test = /(^|[_-])(test|integration|e2e)($|[_-])/.test(dbName);
 const postgres = ["postgres:", "postgresql:"].includes(url.protocol);
 
 if (!postgres || !local || !test) {
@@ -17,4 +17,4 @@ if (!postgres || !local || !test) {
   );
 }
 
-console.log(`Database test guard passed for ${name}.`);
+console.log(`Database test guard passed for ${dbName}.`);
