@@ -9,6 +9,7 @@ export default async function SettingsPage() {
   const memberships = await getPrisma().workspaceMember.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: "asc" },
+    take: 100,
     select: { role: true, workspace: { select: { id: true, name: true, slug: true } } },
   });
   return (
@@ -19,6 +20,7 @@ export default async function SettingsPage() {
         <h2 className="font-semibold">Active workspace</h2>
         <p className="mt-1 text-sm text-slate-500">Switching workspaces changes the tenant context for the team area.</p>
         <WorkspaceSwitcher memberships={memberships} activeWorkspaceId={session.user.workspaceId} />
+        {memberships.length === 100 ? <p className="mt-3 text-xs text-slate-500">Showing up to 100 workspace memberships.</p> : null}
       </section>
     </main>
   );
