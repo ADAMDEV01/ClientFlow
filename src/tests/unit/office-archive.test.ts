@@ -94,7 +94,6 @@ describe("Office archive inspection", () => {
     expect(() => inspectOfficeArchive(archive, "docx")).toThrow(/unsafe entry path/);
   });
 
-
   it("rejects an archive with too many entries", () => {
     const entries = Array.from({ length: 1_001 }, (_, index) => ({
       name: `entry-${index}.xml`,
