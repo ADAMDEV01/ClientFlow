@@ -142,9 +142,9 @@ describe("Office archive inspection", () => {
   });
 
   it("rejects a truncated archive", () => {
-    expect(() => inspectOfficeArchive(new Uint8Array([1, 2, 3]), "docx")).toThrow(
-      /truncated/,
-    );
+    expect(
+      () => inspectOfficeArchive(new Uint8Array([1, 2, 3]), "docx"),
+    ).toThrow(/truncated/);
   });
 
   it("rejects unsafe traversal paths", () => {
@@ -153,7 +153,9 @@ describe("Office archive inspection", () => {
       { name: "word/../evil.xml", data: "x" },
       { name: "word/document.xml", data: "x" },
     ]);
-    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(/unsafe entry path/);
+    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(
+      /unsafe entry path/,
+    );
   });
 
   it("rejects an archive with too many entries", () => {
