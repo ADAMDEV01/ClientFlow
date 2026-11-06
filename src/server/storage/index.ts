@@ -19,7 +19,7 @@ function safeKey(key: string) {
 }
 
 class LocalStorageProvider implements StorageProvider {
-  private readonly root = path.resolve(process.env.CLIENTFLOW_LOCAL_STORAGE_DIR ?? ".clientflow-storage");
+  private readonly root = path.join(process.cwd(), ".clientflow-storage");
 
   private resolveKey(key: string) {
     const target = path.resolve(this.root, safeKey(key));
