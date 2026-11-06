@@ -1,4 +1,7 @@
 import { deflateRawSync } from "node:zlib";
+import { vi } from "vitest";
+
+vi.mock("server-only", () => ({}));
 import { describe, expect, it } from "vitest";
 import { inspectOfficeArchive } from "@/server/storage/office-archive";
 
