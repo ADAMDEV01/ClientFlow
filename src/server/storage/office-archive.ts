@@ -263,4 +263,3 @@ export function inspectOfficeArchive(input: Uint8Array, kind: "docx" | "xlsx"): 
     }
   }
 }
-

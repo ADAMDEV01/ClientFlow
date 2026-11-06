@@ -47,4 +47,3 @@ describe("workspace activity filter options", () => {
     });
   });
 });
-

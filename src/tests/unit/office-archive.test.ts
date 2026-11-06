@@ -183,4 +183,3 @@ describe("Office archive inspection", () => {
     expect(() => inspectOfficeArchive(archive, "docx")).toThrow(/compression ratio/);
   });
 });
-
