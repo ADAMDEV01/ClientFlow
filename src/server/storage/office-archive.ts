@@ -158,13 +158,22 @@ export function inspectOfficeArchive(input: Uint8Array, kind: "docx" | "xlsx"): 
       const localNameEnd = localOffset + 30 + localNameLength;
       const dataStart = localNameEnd + localExtraLength;
       const dataEnd = dataStart + compressedSize;
-      if (localNameEnd > centralOffset || dataStart < localOffset || dataEnd > centralOffset || dataEnd < dataStart) {
+      if (
+        localNameEnd > centralOffset ||
+        dataStart < localOffset ||
+        dataEnd > centralOffset ||
+        dataEnd < dataStart
+      ) {
         reject("compressed entry data is out of bounds.");
       }
       const localName = bytes.toString("utf8", localOffset + 30, localNameEnd);
       if (localName !== name) reject("local header filename does not match the central directory.");
-      if (localFlags !== flags) reject("local header flags do not match the central directory.");
-      if (localMethod !== method) reject("local header compression method does not match the central directory.");
+      if (localFlags !== flags) {
+        reject("local header flags do not match the central directory.");
+      }
+      if (localMethod !== method) {
+        reject("local header compression method does not match the central directory.");
+      }
       if (flags & 0x0008) {
         if (
           (localCrc !== 0 && localCrc !== expectedCrc) ||
@@ -183,10 +192,15 @@ export function inspectOfficeArchive(input: Uint8Array, kind: "docx" | "xlsx"): 
       if (flags & 0x0008) {
         // Data descriptors may optionally begin with the signature 0x08074b50.
         let descriptorOffset = dataEnd;
-        if (descriptorOffset + 4 <= centralOffset && bytes.readUInt32LE(descriptorOffset) === 0x08074b50) {
+        if (
+          descriptorOffset + 4 <= centralOffset &&
+          bytes.readUInt32LE(descriptorOffset) === 0x08074b50
+        ) {
           descriptorOffset += 4;
         }
-        if (descriptorOffset + 12 > centralOffset) reject("data descriptor is truncated.");
+        if (descriptorOffset + 12 > centralOffset) {
+          reject("data descriptor is truncated.");
+        }
         const descriptorCrc = bytes.readUInt32LE(descriptorOffset);
         const descriptorCompressedSize = bytes.readUInt32LE(descriptorOffset + 4);
         const descriptorExpandedSize = bytes.readUInt32LE(descriptorOffset + 8);
@@ -194,7 +208,9 @@ export function inspectOfficeArchive(input: Uint8Array, kind: "docx" | "xlsx"): 
           descriptorCrc !== expectedCrc ||
           descriptorCompressedSize !== compressedSize ||
           descriptorExpandedSize !== expandedSize
-        ) reject("data descriptor does not match the central directory.");
+        ) {
+          reject("data descriptor does not match the central directory.");
+        }
         rangeEnd = descriptorOffset + 12;
       }
       localRanges.push({ start: localOffset, end: rangeEnd });
