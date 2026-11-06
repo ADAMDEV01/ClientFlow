@@ -91,16 +91,13 @@ describe("Office archive inspection", () => {
     expect(() => inspectOfficeArchive(validDocx(), "docx")).not.toThrow();
   });
 
-  it(
-    "rejects a local filename that differs from the central directory",
-    () => {
-      const archive = Buffer.from(validDocx());
-      archive[30] = archive[30] === 0x5b ? 0x58 : 0x5b;
-      expect(() => inspectOfficeArchive(archive, "docx")).toThrow(
-        /filename does not match/,
-      );
-    },
-  );
+  it("rejects a local filename that differs from the central directory", () => {
+    const archive = Buffer.from(validDocx());
+    archive[30] = archive[30] === 0x5b ? 0x58 : 0x5b;
+    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(
+      /filename does not match/,
+    );
+  });
 
   it("rejects local and central directory flag mismatches", () => {
     const archive = Buffer.from(validDocx());
@@ -153,9 +150,7 @@ describe("Office archive inspection", () => {
       { name: "word/../evil.xml", data: "x" },
       { name: "word/document.xml", data: "x" },
     ]);
-    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(
-      /unsafe entry path/,
-    );
+    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(/unsafe entry path/);
   });
 
   it("rejects an archive with too many entries", () => {
