@@ -8,7 +8,7 @@ import { ClientActivityFeed } from "@/app/components/client-activity-feed";
 export default async function ClientPortalHome({
   searchParams,
 }: {
-  searchParams: Promise<{ cursor?: string }>;
+  searchParams: Promise<{ cursor?: string; activityCursor?: string }>;
 }) {
   const session = await auth();
   if (
@@ -23,7 +23,7 @@ export default async function ClientPortalHome({
   const params = await searchParams;
   const [result, activity] = await Promise.all([
     getClientPortalProjects(params.cursor),
-    getClientActivityFeed(),
+    getClientActivityFeed(params.activityCursor),
   ]);
 
   return (
@@ -71,7 +71,7 @@ export default async function ClientPortalHome({
           </Link>
         </div>
       ) : null}
-      <ClientActivityFeed entries={activity} />
+      <ClientActivityFeed entries={activity.entries} hasMore={activity.hasMore} nextCursor={activity.nextCursor} />
     </main>
   );
 }

@@ -136,6 +136,8 @@ describe("client portal query isolation", () => {
       project: { findFirst },
       task: { groupBy: taskGroupBy },
       milestone: { groupBy: milestoneGroupBy },
+      review: { findMany: vi.fn().mockResolvedValue([]) },
+      deliverableComment: { findMany: vi.fn().mockResolvedValue([]) },
     });
 
     const project = await getClientProjectPortal("workspace-a", "project-a");
@@ -154,7 +156,7 @@ describe("client portal query isolation", () => {
             where: {
               status: { in: ["SUBMITTED", "APPROVED", "CHANGES_REQUESTED"] },
             },
-            take: 50,
+            take: 51,
           }),
         }),
       }),

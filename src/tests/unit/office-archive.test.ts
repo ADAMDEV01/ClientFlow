@@ -5,7 +5,10 @@ vi.mock("server-only", () => ({}));
 
 import { inspectOfficeArchive } from "@/server/storage/office-archive";
 
-function makeZip(entries: Array<{ name: string; data: string }>): Uint8Array {
+function makeZip(
+  entries: Array<{ name: string; data: string }>,
+  options: { dataDescriptor?: boolean; signedDescriptor?: boolean } = {},
+): Uint8Array {
   const locals: Buffer[] = [];
   const centrals: Buffer[] = [];
   let offset = 0;
@@ -18,18 +21,32 @@ function makeZip(entries: Array<{ name: string; data: string }>): Uint8Array {
     const local = Buffer.alloc(30 + name.length);
     local.writeUInt32LE(0x04034b50, 0);
     local.writeUInt16LE(20, 4);
+    local.writeUInt16LE(options.dataDescriptor ? 0x0008 : 0, 6);
     local.writeUInt16LE(8, 8);
-    local.writeUInt32LE(crc, 14);
-    local.writeUInt32LE(compressed.length, 18);
-    local.writeUInt32LE(data.length, 22);
+    local.writeUInt32LE(options.dataDescriptor ? 0 : crc, 14);
+    local.writeUInt32LE(options.dataDescriptor ? 0 : compressed.length, 18);
+    local.writeUInt32LE(options.dataDescriptor ? 0 : data.length, 22);
     local.writeUInt16LE(name.length, 26);
     name.copy(local, 30);
-    locals.push(local, compressed);
+    const descriptor = options.dataDescriptor
+      ? (() => {
+          const signed = options.signedDescriptor !== false;
+          const value = Buffer.alloc(signed ? 16 : 12);
+          const start = signed ? 4 : 0;
+          if (signed) value.writeUInt32LE(0x08074b50, 0);
+          value.writeUInt32LE(crc, start);
+          value.writeUInt32LE(compressed.length, start + 4);
+          value.writeUInt32LE(data.length, start + 8);
+          return value;
+        })()
+      : Buffer.alloc(0);
+    locals.push(local, compressed, descriptor);
 
     const central = Buffer.alloc(46 + name.length);
     central.writeUInt32LE(0x02014b50, 0);
     central.writeUInt16LE(20, 4);
     central.writeUInt16LE(20, 6);
+    central.writeUInt16LE(options.dataDescriptor ? 0x0008 : 0, 8);
     central.writeUInt16LE(8, 10);
     central.writeUInt32LE(crc, 16);
     central.writeUInt32LE(compressed.length, 20);
@@ -38,7 +55,7 @@ function makeZip(entries: Array<{ name: string; data: string }>): Uint8Array {
     central.writeUInt32LE(offset, 42);
     name.copy(central, 46);
     centrals.push(central);
-    offset += local.length + compressed.length;
+    offset += local.length + compressed.length + descriptor.length;
   }
 
   const localBytes = Buffer.concat(locals);
@@ -72,6 +89,44 @@ const validDocx = () =>
 describe("Office archive inspection", () => {
   it("accepts a structurally valid DOCX archive", () => {
     expect(() => inspectOfficeArchive(validDocx(), "docx")).not.toThrow();
+  });
+
+  it("rejects a local filename that differs from the central directory", () => {
+    const archive = Buffer.from(validDocx());
+    archive[30] = archive[30] === 0x5b ? 0x58 : 0x5b;
+    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(
+      /filename does not match/,
+    );
+  });
+
+  it("rejects local and central directory flag mismatches", () => {
+    const archive = Buffer.from(validDocx());
+    const endRecord = archive.length - 22;
+    const centralOffset = archive.readUInt32LE(endRecord + 16);
+    archive.writeUInt16LE(0x0800, centralOffset + 8);
+    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(/flags do not match/);
+  });
+
+  it("accepts entries that use a valid signed data descriptor", () => {
+    const archive = makeZip(
+      [
+        { name: "[Content_Types].xml", data: "<Types/>" },
+        { name: "word/document.xml", data: "<document/>" },
+      ],
+      { dataDescriptor: true },
+    );
+    expect(() => inspectOfficeArchive(archive, "docx")).not.toThrow();
+  });
+
+  it("accepts entries that use a valid unsigned data descriptor", () => {
+    const archive = makeZip(
+      [
+        { name: "[Content_Types].xml", data: "<Types/>" },
+        { name: "word/document.xml", data: "<document/>" },
+      ],
+      { dataDescriptor: true, signedDescriptor: false },
+    );
+    expect(() => inspectOfficeArchive(archive, "docx")).not.toThrow();
   });
 
   it("rejects a missing required Office entry", () => {
