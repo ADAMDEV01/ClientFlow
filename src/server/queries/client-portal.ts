@@ -134,23 +134,6 @@ export async function getClientProjectPortal(
           id: true, name: true, description: true, version: true, status: true,
           fileName: true, mimeType: true, sizeBytes: true, revision: true,
           submittedAt: true, updatedAt: true,
-          reviews: {
-            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-            ...(cursors.reviewCursors?.[ "PLACEHOLDER" ] ? {} : {}),
-            take: REVIEW_PAGE_SIZE + 1,
-            select: {
-              id: true, decision: true, feedback: true, version: true, createdAt: true,
-              reviewer: { select: { name: true } },
-            },
-          },
-          comments: {
-            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-            take: COMMENT_PAGE_SIZE + 1,
-            select: {
-              id: true, body: true, version: true, createdAt: true,
-              author: { select: { name: true } },
-            },
-          },
         },
       },
     },
@@ -178,11 +161,37 @@ export async function getClientProjectPortal(
     ? project.deliverables.slice(0, DELIVERABLE_PAGE_SIZE)
     : project.deliverables;
 
-  const deliverables = deliverableRows.map((item) => {
-    const reviewsHasMore = item.reviews.length > REVIEW_PAGE_SIZE;
-    const reviews = reviewsHasMore ? item.reviews.slice(0, REVIEW_PAGE_SIZE) : item.reviews;
-    const commentsHasMore = item.comments.length > COMMENT_PAGE_SIZE;
-    const comments = commentsHasMore ? item.comments.slice(0, COMMENT_PAGE_SIZE) : item.comments;
+  const deliverables = await Promise.all(deliverableRows.map(async (item) => {
+    const [reviewRows, commentRows] = await Promise.all([
+      prisma.review.findMany({
+        where: { workspaceId, deliverableId: item.id },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        ...(cursors.reviewCursors?.[item.id]
+          ? { cursor: { id: cursors.reviewCursors[item.id] }, skip: 1 }
+          : {}),
+        take: REVIEW_PAGE_SIZE + 1,
+        select: {
+          id: true, decision: true, feedback: true, version: true, createdAt: true,
+          reviewer: { select: { name: true } },
+        },
+      }),
+      prisma.deliverableComment.findMany({
+        where: { workspaceId, deliverableId: item.id },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        ...(cursors.commentCursors?.[item.id]
+          ? { cursor: { id: cursors.commentCursors[item.id] }, skip: 1 }
+          : {}),
+        take: COMMENT_PAGE_SIZE + 1,
+        select: {
+          id: true, body: true, version: true, createdAt: true,
+          author: { select: { name: true } },
+        },
+      }),
+    ]);
+    const reviewsHasMore = reviewRows.length > REVIEW_PAGE_SIZE;
+    const reviews = reviewsHasMore ? reviewRows.slice(0, REVIEW_PAGE_SIZE) : reviewRows;
+    const commentsHasMore = commentRows.length > COMMENT_PAGE_SIZE;
+    const comments = commentsHasMore ? commentRows.slice(0, COMMENT_PAGE_SIZE) : commentRows;
     return {
       ...item, reviews, comments,
       reviewsHasMore,
@@ -190,7 +199,7 @@ export async function getClientProjectPortal(
       commentsHasMore,
       commentsNextCursor: commentsHasMore ? comments[comments.length - 1]?.id ?? null : null,
     };
-  });
+  }));
 
   return {
     ...project,
