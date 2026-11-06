@@ -68,13 +68,15 @@ export async function getWorkspaceActivityOptions(workspaceId: string) {
   const [projects, members] = await Promise.all([
     prisma.project.findMany({
       where: { workspaceId },
-      orderBy: { name: "asc" },
+      orderBy: [{ name: "asc" }, { id: "asc" }],
+      take: 100,
       select: { id: true, name: true },
     }),
     prisma.activity.findMany({
       where: { workspaceId, actorId: { not: null } },
       distinct: ["actorId"],
       orderBy: { createdAt: "desc" },
+      take: 100,
       select: { actorId: true, actor: { select: { name: true, email: true } } },
     }),
   ]);
@@ -99,9 +101,9 @@ export async function getWorkspaceActivity(
       where: { id: filters.projectId, workspaceId },
       select: {
         id: true,
-        tasks: { select: { id: true } },
-        milestones: { select: { id: true } },
-        deliverables: { select: { id: true } },
+        tasks: { take: 100, select: { id: true } },
+        milestones: { take: 100, select: { id: true } },
+        deliverables: { take: 100, select: { id: true } },
       },
     });
     if (!project) return { entries: [], nextCursor: null, hasMore: false };
@@ -161,12 +163,17 @@ export async function getClientActivityFeed() {
       clientId: user.clientId,
       client: { userId: user.id },
     },
+    take: 100,
     select: {
       id: true,
       name: true,
-      tasks: { where: { visibleToClient: true }, select: { id: true } },
-      milestones: { select: { id: true } },
-      deliverables: { where: { status: { in: ["SUBMITTED", "APPROVED", "CHANGES_REQUESTED"] } }, select: { id: true } },
+      tasks: { where: { visibleToClient: true }, take: 50, select: { id: true } },
+      milestones: { take: 50, select: { id: true } },
+      deliverables: {
+        where: { status: { in: ["SUBMITTED", "APPROVED", "CHANGES_REQUESTED"] } },
+        take: 50,
+        select: { id: true },
+      },
     },
   });
 
