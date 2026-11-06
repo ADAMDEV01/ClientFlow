@@ -1,14 +1,15 @@
 import { deflateRawSync } from "node:zlib";
-import { vi } from "vitest";
+import { vi, describe, expect, it } from "vitest";
 
 vi.mock("server-only", () => ({}));
-import { describe, expect, it } from "vitest";
+
 import { inspectOfficeArchive } from "@/server/storage/office-archive";
 
 function makeZip(entries: Array<{ name: string; data: string }>): Uint8Array {
   const locals: Buffer[] = [];
   const centrals: Buffer[] = [];
   let offset = 0;
+
   for (const entry of entries) {
     const name = Buffer.from(entry.name);
     const data = Buffer.from(entry.data);
@@ -39,6 +40,7 @@ function makeZip(entries: Array<{ name: string; data: string }>): Uint8Array {
     centrals.push(central);
     offset += local.length + compressed.length;
   }
+
   const localBytes = Buffer.concat(locals);
   const centralBytes = Buffer.concat(centrals);
   const end = Buffer.alloc(22);
@@ -54,15 +56,18 @@ function crc32(bytes: Buffer): number {
   let crc = 0xffffffff;
   for (const byte of bytes) {
     crc ^= byte;
-    for (let bit = 0; bit < 8; bit += 1) crc = crc & 1 ? 0xedb88320 ^ (crc >>> 1) : crc >>> 1;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = crc & 1 ? 0xedb88320 ^ (crc >>> 1) : crc >>> 1;
+    }
   }
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-const validDocx = () => makeZip([
-  { name: "[Content_Types].xml", data: "<Types/>" },
-  { name: "word/document.xml", data: "<document/>" },
-]);
+const validDocx = () =>
+  makeZip([
+    { name: "[Content_Types].xml", data: "<Types/>" },
+    { name: "word/document.xml", data: "<document/>" },
+  ]);
 
 describe("Office archive inspection", () => {
   it("accepts a structurally valid DOCX archive", () => {
@@ -70,26 +75,37 @@ describe("Office archive inspection", () => {
   });
 
   it("rejects a missing required Office entry", () => {
-    expect(() => inspectOfficeArchive(makeZip([{ name: "random.txt", data: "x" }]), "docx")).toThrow(/required Office entry/);
+    const archive = makeZip([{ name: "random.txt", data: "x" }]);
+    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(
+      /required Office entry/,
+    );
   });
 
   it("rejects a truncated archive", () => {
-    expect(() => inspectOfficeArchive(new Uint8Array([1, 2, 3]), "docx")).toThrow(/truncated/);
+    expect(() =>
+      inspectOfficeArchive(new Uint8Array([1, 2, 3]), "docx"),
+    ).toThrow(/truncated/);
   });
 
   it("rejects unsafe traversal paths", () => {
-    expect(() => inspectOfficeArchive(makeZip([
+    const archive = makeZip([
       { name: "[Content_Types].xml", data: "x" },
       { name: "word/../evil.xml", data: "x" },
       { name: "word/document.xml", data: "x" },
-    ]), "docx")).toThrow(/unsafe entry path/);
+    ]);
+    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(
+      /unsafe entry path/,
+    );
   });
 
   it("rejects excessive compression ratios", () => {
     const highlyCompressible = "a".repeat(10_000);
-    expect(() => inspectOfficeArchive(makeZip([
+    const archive = makeZip([
       { name: "[Content_Types].xml", data: "x" },
       { name: "word/document.xml", data: highlyCompressible },
-    ]), "docx")).toThrow(/compression ratio/);
+    ]);
+    expect(() => inspectOfficeArchive(archive, "docx")).toThrow(
+      /compression ratio/,
+    );
   });
 });
