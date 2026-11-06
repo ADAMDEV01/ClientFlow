@@ -6,6 +6,7 @@ const { getPrismaMock } = vi.hoisted(() => ({
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/prisma", () => ({ getPrisma: getPrismaMock }));
+vi.mock("@/server/authz", () => ({ requireUser: vi.fn() }));
 
 import { getWorkspaceActivityOptions } from "@/server/queries/analytics";
 
