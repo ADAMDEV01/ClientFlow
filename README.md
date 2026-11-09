@@ -225,3 +225,8 @@ See [Production service setup](docs/PRODUCTION_SETUP.md) for PostgreSQL migratio
 ## Repository
 
 - Source code: https://github.com/ADAMDEV01/ClientFlow
+
+## Live deployment
+
+- **Live application:** https://client-flow-isvm6brdg-addrryhby-5992.vercel.app
+- **GitHub repository:** https://github.com/ADAMDEV01/ClientFlow
