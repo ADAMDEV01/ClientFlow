@@ -212,3 +212,16 @@ See [docs/DATABASE.md](docs/DATABASE.md) for the Mermaid ER diagram and database
 ## Production setup
 
 See [Production service setup](docs/PRODUCTION_SETUP.md) for PostgreSQL migration preflight, private S3-compatible storage, Resend invitation email, and post-deployment verification.
+
+## Skills demonstrated
+
+- **Frontend:** Next.js App Router, React, TypeScript, Tailwind CSS, server and client components.
+- **Backend:** Server Actions, Route Handlers, REST-style API design, Zod validation.
+- **Data:** PostgreSQL, Prisma ORM, schema migrations, relational data modeling.
+- **Security:** Auth.js credentials authentication, Argon2id password hashing, role-based access control, workspace-level authorization, rate limiting, private object storage.
+- **Quality:** Vitest, Playwright, integration testing, TypeScript strict mode, ESLint, Prettier.
+- **Delivery:** Docker-based development workflows, GitHub Actions CI, Vercel, Neon PostgreSQL.
+
+## Repository
+
+- Source code: https://github.com/ADAMDEV01/ClientFlow
