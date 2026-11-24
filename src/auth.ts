@@ -6,8 +6,6 @@ import { authConfig } from "@/auth.config";
 import { getPrisma } from "@/lib/prisma";
 import { consumeRateLimit } from "@/server/services/rate-limit";
 
-const AUTH_CONTEXT_REFRESH_INTERVAL = 60_000;
-
 const credentialsSchema = z.object({
   email: z.string().trim().email().max(254).transform((value) => value.toLowerCase()),
   password: z.string().min(1).max(128),
@@ -42,16 +40,10 @@ export const { handlers, auth, signIn, signOut, unstable_update: updateSession }
   callbacks: {
     ...authConfig.callbacks,
     async jwt({ token, user, trigger }) {
-      const lastContextRefresh =
-        typeof token.authContextUpdatedAt === "number" ? token.authContextUpdatedAt : 0;
-      const shouldRefresh =
-        Boolean(user?.id) ||
-        trigger === "update" ||
-        Date.now() - lastContextRefresh >= AUTH_CONTEXT_REFRESH_INTERVAL;
-
-      // Keep workspace and role claims in the JWT between refreshes instead of
-      // adding a database round trip to every authenticated page request.
-      if (!shouldRefresh) return token;
+      // Server Components can read a refreshed JWT but cannot reliably persist
+      // its Set-Cookie header. Refresh context only on sign-in or an explicit
+      // session update, avoiding repeat database reads on page navigation.
+      if (!user?.id && trigger !== "update") return token;
 
       const userId =
         typeof user?.id === "string" ? user.id :
@@ -95,7 +87,6 @@ export const { handlers, auth, signIn, signOut, unstable_update: updateSession }
       token.activeWorkspaceId = membership?.workspaceId ?? null;
       token.role = membership?.role ?? (client ? "CLIENT" : null);
       token.clientId = client?.id ?? null;
-      token.authContextUpdatedAt = Date.now();
       return token;
     },
   },
