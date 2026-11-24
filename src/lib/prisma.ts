@@ -16,19 +16,15 @@ function createPrismaClient(): PrismaClient {
 }
 
 /**
- * Reuse one Prisma client during development hot reloads.
- * The client is created only when database access is requested.
+ * Reuse one Prisma client and its underlying connection pool per Node.js
+ * runtime. Serverless instances can be reused across requests in production;
+ * creating a client on every getPrisma() call needlessly churns pools and
+ * increases connection pressure.
  */
 export function getPrisma(): PrismaClient {
-  if (globalForPrisma.prisma) {
-    return globalForPrisma.prisma;
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = createPrismaClient();
   }
 
-  const client = createPrismaClient();
-
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = client;
-  }
-
-  return client;
+  return globalForPrisma.prisma;
 }
