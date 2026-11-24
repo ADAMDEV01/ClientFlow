@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { updateSession } from "@/auth";
 import { redirect } from "next/navigation";
 import { getPrisma } from "@/lib/prisma";
 import { switchWorkspaceSchema } from "@/lib/validations/auth";
@@ -48,6 +49,10 @@ export async function switchWorkspaceAction(
     where: { id: user.id },
     data: { activeWorkspaceId: membership.workspaceId },
   });
+
+  // Refresh the JWT immediately so the redirect uses the selected workspace.
+  await updateSession({});
+
   revalidatePath("/", "layout");
   redirect("/app");
 }

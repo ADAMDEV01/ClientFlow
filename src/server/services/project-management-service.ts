@@ -178,23 +178,32 @@ export async function removeWorkspaceMember(workspaceId: string, actorId: string
 }
 export async function getProjectProgress(workspaceId: string, projectId: string) {
   const prisma = getPrisma();
-  const project = await prisma.project.findFirst({
-    where: { id: projectId, workspaceId },
-    select: { id: true },
-  });
-  if (!project) throw new Error("Project not found in this workspace.");
 
-  const [totalTasks, completedTasks, totalMilestones, completedMilestones] =
-    await Promise.all([
-      prisma.task.count({ where: { workspaceId, projectId } }),
-      prisma.task.count({ where: { workspaceId, projectId, status: "DONE" } }),
-      prisma.milestone.count({ where: { workspaceId, projectId } }),
-      prisma.milestone.count({
-        where: { workspaceId, projectId, status: "COMPLETED" },
-      }),
-    ]);
+  // The caller already verifies the project belongs to this workspace before
+  // requesting its progress, so avoid repeating that lookup.
+  const [taskGroups, milestoneGroups] = await Promise.all([
+    prisma.task.groupBy({
+      by: ["status"],
+      where: { workspaceId, projectId },
+      _count: { _all: true },
+    }),
+    prisma.milestone.groupBy({
+      by: ["status"],
+      where: { workspaceId, projectId },
+      _count: { _all: true },
+    }),
+  ]);
 
-  const total = totalTasks + totalMilestones;
-  if (!total) return 0;
-  return Math.round(((completedTasks + completedMilestones) / total) * 100);
+  const totalTasks = taskGroups.reduce((sum, group) => sum + group._count._all, 0);
+  const totalMilestones = milestoneGroups.reduce((sum, group) => sum + group._count._all, 0);
+  if (totalTasks + totalMilestones === 0) return 0;
+
+  const completedTasks =
+    taskGroups.find((group) => group.status === "DONE")?._count._all ?? 0;
+  const completedMilestones =
+    milestoneGroups.find((group) => group.status === "COMPLETED")?._count._all ?? 0;
+
+  return Math.round(
+    ((completedTasks + completedMilestones) / (totalTasks + totalMilestones)) * 100,
+  );
 }

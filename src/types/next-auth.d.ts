@@ -20,5 +20,6 @@ declare module "next-auth/jwt" {
     activeWorkspaceId?: string | null;
     role?: "OWNER" | "ADMIN" | "MEMBER" | "CLIENT" | null;
     clientId?: string | null;
+    authContextUpdatedAt?: number;
   }
 }

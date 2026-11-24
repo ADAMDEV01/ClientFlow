@@ -6,12 +6,14 @@ import { authConfig } from "@/auth.config";
 import { getPrisma } from "@/lib/prisma";
 import { consumeRateLimit } from "@/server/services/rate-limit";
 
+const AUTH_CONTEXT_REFRESH_INTERVAL = 60_000;
+
 const credentialsSchema = z.object({
   email: z.string().trim().email().max(254).transform((value) => value.toLowerCase()),
   password: z.string().min(1).max(128),
 });
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, auth, signIn, signOut, unstable_update: updateSession } = NextAuth({
   ...authConfig,
   providers: [
     Credentials({
@@ -39,7 +41,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     ...authConfig.callbacks,
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
+      const lastContextRefresh =
+        typeof token.authContextUpdatedAt === "number" ? token.authContextUpdatedAt : 0;
+      const shouldRefresh =
+        Boolean(user?.id) ||
+        trigger === "update" ||
+        Date.now() - lastContextRefresh >= AUTH_CONTEXT_REFRESH_INTERVAL;
+
+      // Keep workspace and role claims in the JWT between refreshes instead of
+      // adding a database round trip to every authenticated page request.
+      if (!shouldRefresh) return token;
+
       const userId =
         typeof user?.id === "string" ? user.id :
         typeof token.userId === "string" ? token.userId :
@@ -62,11 +75,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         },
       });
 
+      if (!account) return null;
+
       const membership =
-        account?.memberships.find((item) => item.workspaceId === account.activeWorkspaceId) ??
+        account.memberships.find((item) => item.workspaceId === account.activeWorkspaceId) ??
         account?.memberships[0] ??
         null;
-      const client = membership ? null : account?.clientProfiles[0] ?? null;
+      const client = membership ? null : account.clientProfiles[0] ?? null;
 
       if (account && membership && account.activeWorkspaceId !== membership.workspaceId) {
         await prisma.user.update({
@@ -80,6 +95,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       token.activeWorkspaceId = membership?.workspaceId ?? null;
       token.role = membership?.role ?? (client ? "CLIENT" : null);
       token.clientId = client?.id ?? null;
+      token.authContextUpdatedAt = Date.now();
       return token;
     },
   },
