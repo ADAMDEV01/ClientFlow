@@ -1,4 +1,5 @@
 name: CI
+# Keep security updates and the committed npm lockfile in sync before merging.
 
 on:
   workflow_dispatch:
