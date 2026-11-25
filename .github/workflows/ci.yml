@@ -45,13 +45,6 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - name: Show exact Prettier formatting diffs
-        run: |
-          for file in src/server/storage/malware-scanner.ts src/tests/unit/malware-scanner.test.ts; do
-            output="/tmp/$(basename "$file").prettier"
-            npx prettier "$file" > "$output"
-            diff -u --label "$file" "$file" --label "Prettier" "$output" || true
-          done
       - name: Report npm dependency advisories
         run: |
           npm audit --json > /tmp/npm-audit.json || true
