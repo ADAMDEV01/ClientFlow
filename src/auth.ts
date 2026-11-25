@@ -1,8 +1,8 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import argon2 from "argon2";
 import { z } from "zod";
 import { authConfig } from "@/auth.config";
+import { verifyCredentialsPassword } from "@/lib/credential-password";
 import { getPrisma } from "@/lib/prisma";
 import { consumeRateLimit } from "@/server/services/rate-limit";
 
@@ -29,10 +29,11 @@ export const { handlers, auth, signIn, signOut, unstable_update: updateSession }
           where: { email: parsed.data.email },
           select: { id: true, name: true, email: true, passwordHash: true },
         });
-        if (!account) return null;
-
-        const matches = await argon2.verify(account.passwordHash, parsed.data.password);
-        if (!matches) return null;
+        const matches = await verifyCredentialsPassword(
+          parsed.data.password,
+          account?.passwordHash ?? null,
+        );
+        if (!account || !matches) return null;
         return { id: account.id, name: account.name, email: account.email };
       },
     }),
