@@ -1,8 +1,8 @@
+import { createHash, randomBytes } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { createHash, randomBytes } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
 import { acceptWorkspaceInvitation } from "@/server/services/invitation-service";
 
@@ -37,11 +37,24 @@ async function createInvitation(email: string, role: "ADMIN" | "MEMBER") {
 beforeAll(async () => {
   await prisma.user.createMany({
     data: [
-      { id: ownerId, email: `${ownerId}@example.test`, passwordHash: "integration-only" },
-      { id: adminId, email: `${adminId}@example.test`, passwordHash: "integration-only" },
-      { id: memberId, email: `${memberId}@example.test`, passwordHash: "integration-only" },
+      {
+        id: ownerId,
+        email: `${ownerId}@example.test`,
+        passwordHash: "integration-only",
+      },
+      {
+        id: adminId,
+        email: `${adminId}@example.test`,
+        passwordHash: "integration-only",
+      },
+      {
+        id: memberId,
+        email: `${memberId}@example.test`,
+        passwordHash: "integration-only",
+      },
     ],
   });
+
   const workspace = await prisma.workspace.create({
     data: {
       name: "Invitation Role Safety",
@@ -63,6 +76,7 @@ afterAll(async () => {
   if (workspaceId) {
     await prisma.workspace.delete({ where: { id: workspaceId } });
   }
+
   await prisma.user.deleteMany({
     where: { id: { in: [ownerId, adminId, memberId] } },
   });
@@ -71,19 +85,17 @@ afterAll(async () => {
 
 describe("workspace invitation role safety", () => {
   it("does not demote an existing ADMIN when they accept an older MEMBER invitation", async () => {
-    const invitation = await createInvitation(`${adminId}@example.test`, "MEMBER");
+    const email = `${adminId}@example.test`;
+    const invitation = await createInvitation(email, "MEMBER");
 
     await expect(
-      acceptWorkspaceInvitation(
-        adminId,
-        `${adminId}@example.test`,
-        workspaceId,
-        invitation.token,
-      ),
+      acceptWorkspaceInvitation(adminId, email, workspaceId, invitation.token),
     ).rejects.toThrow("already a member");
 
     const membership = await prisma.workspaceMember.findUniqueOrThrow({
-      where: { workspaceId_userId: { workspaceId, userId: adminId } },
+      where: {
+        workspaceId_userId: { workspaceId, userId: adminId },
+      },
       select: { role: true },
     });
     const savedInvitation = await prisma.invitation.findUniqueOrThrow({
@@ -96,30 +108,23 @@ describe("workspace invitation role safety", () => {
   });
 
   it("grants the invited role to a user who is not already a workspace member", async () => {
-    const invitation = await createInvitation(`${memberId}@example.test`, "MEMBER");
+    const email = `${memberId}@example.test`;
+    const invitation = await createInvitation(email, "MEMBER");
 
     await expect(
-      acceptWorkspaceInvitation(
-        memberId,
-        `${memberId}@example.test`,
-        workspaceId,
-        invitation.token,
-      ),
+      acceptWorkspaceInvitation(memberId, email, workspaceId, invitation.token),
     ).resolves.toMatchObject({ workspaceId, role: "MEMBER" });
 
     const membership = await prisma.workspaceMember.findUniqueOrThrow({
-      where: { workspaceId_userId: { workspaceId, userId: memberId } },
+      where: {
+        workspaceId_userId: { workspaceId, userId: memberId },
+      },
       select: { role: true },
     });
     expect(membership.role).toBe("MEMBER");
 
     await expect(
-      acceptWorkspaceInvitation(
-        memberId,
-        `${memberId}@example.test`,
-        workspaceId,
-        invitation.token,
-      ),
+      acceptWorkspaceInvitation(memberId, email, workspaceId, invitation.token),
     ).rejects.toThrow("invalid, expired, or belongs to another email");
   });
 });
