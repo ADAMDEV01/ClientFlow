@@ -1,0 +1,38 @@
+name: Format auth timing test
+
+on:
+  push:
+    branches:
+      - hardening/auth-login-timing
+
+permissions:
+  contents: write
+
+concurrency:
+  group: clientflow-auth-test-format
+  cancel-in-progress: true
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Format the credential test and commit only when needed
+        run: |
+          npx prettier --write src/tests/unit/auth-credentials.test.ts
+          if git diff --quiet -- src/tests/unit/auth-credentials.test.ts; then
+            echo "Credential test is already formatted."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/tests/unit/auth-credentials.test.ts
+          git commit -m "style(test): apply Prettier to credential timing tests"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
