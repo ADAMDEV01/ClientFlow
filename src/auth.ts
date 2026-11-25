@@ -1,23 +1,10 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import argon2 from "argon2";
 import { z } from "zod";
 import { authConfig } from "@/auth.config";
+import { verifyCredentialsPassword } from "@/lib/credential-password";
 import { getPrisma } from "@/lib/prisma";
 import { consumeRateLimit } from "@/server/services/rate-limit";
-
-// A valid Argon2id hash used to keep unknown-email login attempts on the same
-// expensive verification path as known users. It is not a credential.
-const DUMMY_PASSWORD_HASH =
-  "$argon2id$v=19$m=65536,t=3,p=4$Az7Tujw2El+hbx/snBZ5Ag$x5mB81OGMs6T3T6ADFYGPTY6cx2DQ563pfF8I48up3s";
-
-export async function verifyCredentialsPassword(
-  password: string,
-  storedHash: string | null,
-): Promise<boolean> {
-  const matches = await argon2.verify(storedHash ?? DUMMY_PASSWORD_HASH, password);
-  return storedHash !== null && matches;
-}
 
 const credentialsSchema = z.object({
   email: z.string().trim().email().max(254).transform((value) => value.toLowerCase()),
