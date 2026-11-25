@@ -28,7 +28,7 @@
     "@prisma/client": "^7.10.1",
     "argon2": "^0.44.0",
     "dotenv": "^17.2.3",
-    "next": "16.4.4",
+    "next": "16.4.6",
     "next-auth": "5.0.0-beta.32",
     "pg": "^8.16.3",
     "react": "^19.2.0",
@@ -45,13 +45,17 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "eslint": "^9.39.1",
-    "eslint-config-next": "16.4.4",
+    "eslint-config-next": "16.4.6",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
     "vitest": "^5.0.4",
     "prisma": "^7.10.1",
     "prettier": "^3.6.2",
     "tsx": "^4.20.6",
-    "axe-core": "^4.14.0"
+    "axe-core": "^4.14.0",
+    "typescript-eslint": "^8.74.0"
+  },
+  "overrides": {
+    "effect": "3.22.4"
   }
 }
