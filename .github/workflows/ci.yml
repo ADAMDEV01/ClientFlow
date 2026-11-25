@@ -39,11 +39,15 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - run: npm ci
+      - name: Report npm dependency advisories
+        run: |
+          npm audit --json > /tmp/npm-audit.json || true
+          node -e 'const a = JSON.parse(require("node:fs").readFileSync("/tmp/npm-audit.json", "utf8")); for (const [name, v] of Object.entries(a.vulnerabilities || {})) console.log(JSON.stringify({name, severity:v.severity, direct:v.isDirect, range:v.range, fixAvailable:v.fixAvailable, via:(v.via || []).map(x => typeof x === "string" ? x : {title:x.title, range:x.range, url:x.url})}));'
       - run: npm run db:generate
       - run: npm run db:deploy
       - run: npm run db:seed
@@ -79,8 +83,8 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - run: npm ci
@@ -112,8 +116,8 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - run: npm ci
@@ -150,7 +154,7 @@ jobs:
           CHROME_PATH="$CHROME_PATH" npx --yes lighthouse@13.6.0 http://127.0.0.1:3000 --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --only-categories=performance,accessibility,best-practices,seo --output=html --output-path=./lighthouse-report.html --quiet
       - name: Upload Lighthouse report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: clientflow-lighthouse-report
           path: lighthouse-report.html
