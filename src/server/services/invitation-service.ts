@@ -108,25 +108,42 @@ export async function acceptWorkspaceInvitation(
       throw new Error("Invitation is invalid, expired, or belongs to another email.");
     }
 
-    const invitationUpdate = await tx.invitation.updateMany({
-      where: { id: invitation.id, workspaceId, status: "PENDING" },
-      data: { status: "ACCEPTED", acceptedAt: new Date() },
-    });
-    if (invitationUpdate.count !== 1) throw new Error("Invitation has already been used.");
-
-    await tx.workspaceMember.upsert({
+    // An invitation grants access to a workspace; it must never rewrite an
+    // existing member's role. In particular, accepting an older MEMBER invite
+    // must not silently demote an ADMIN or OWNER.
+    const existingMembership = await tx.workspaceMember.findUnique({
       where: {
         workspaceId_userId: {
           workspaceId: invitation.workspaceId,
           userId,
         },
       },
-      create: {
+      select: { id: true },
+    });
+    if (existingMembership) {
+      throw new Error("This account is already a member of the workspace.");
+    }
+
+    const invitationUpdate = await tx.invitation.updateMany({
+      where: {
+        id: invitation.id,
+        workspaceId,
+        tokenHash,
+        status: "PENDING",
+        expiresAt: { gt: new Date() },
+      },
+      data: { status: "ACCEPTED", acceptedAt: new Date() },
+    });
+    if (invitationUpdate.count !== 1) throw new Error("Invitation has already been used.");
+
+    // Use create, not upsert: the unique (workspaceId, userId) constraint is
+    // the final concurrency guard for two different invitations accepted at once.
+    await tx.workspaceMember.create({
+      data: {
         workspaceId: invitation.workspaceId,
         userId,
         role: invitation.role,
       },
-      update: { role: invitation.role },
     });
 
     await writeActivity(tx, {
