@@ -1,6 +1,6 @@
 import argon2 from "argon2";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { verifyCredentialsPassword } from "@/auth";
+import { verifyCredentialsPassword } from "@/lib/credential-password";
 
 afterEach(() => {
   vi.restoreAllMocks();
