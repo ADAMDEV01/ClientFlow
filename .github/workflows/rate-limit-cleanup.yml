@@ -18,8 +18,8 @@ jobs:
       DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/clientflow?schema=public"
       PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
