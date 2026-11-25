@@ -10,9 +10,9 @@ describe("credential password verification", () => {
   it("runs an Argon2id verification for an unknown email", async () => {
     const verify = vi.spyOn(argon2, "verify").mockResolvedValue(false);
 
-    await expect(
-      verifyCredentialsPassword("submitted-password", null),
-    ).resolves.toBe(false);
+    await expect(verifyCredentialsPassword("submitted-password", null)).resolves.toBe(
+      false,
+    );
 
     expect(verify).toHaveBeenCalledTimes(1);
     const [candidateHash, password] = verify.mock.calls[0];
@@ -24,10 +24,7 @@ describe("credential password verification", () => {
     const verify = vi.spyOn(argon2, "verify").mockResolvedValue(true);
 
     await expect(
-      verifyCredentialsPassword(
-        "submitted-password",
-        "$argon2id$stored-account-hash",
-      ),
+      verifyCredentialsPassword("submitted-password", "$argon2id$stored-account-hash"),
     ).resolves.toBe(true);
 
     expect(verify).toHaveBeenCalledTimes(1);
