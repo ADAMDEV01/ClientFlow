@@ -8,6 +8,11 @@ updates:
       time: "06:00"
       timezone: "Etc/UTC"
     open-pull-requests-limit: 5
+    ignore:
+      # typescript-eslint 8.74 currently declares TypeScript <6.1 support.
+      # Re-enable TypeScript major upgrades when the parser/tooling support them.
+      - dependency-name: "typescript"
+        versions: [">=6.1.0"]
     commit-message:
       prefix: "chore(deps)"
 
