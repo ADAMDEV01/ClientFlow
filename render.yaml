@@ -1,0 +1,36 @@
+services:
+  # ClamAV's unauthenticated TCP listener stays on Render's private network.
+  # The official stable image needs the 4 GB plan for virus database memory.
+  - type: pserv
+    name: clientflow-clamav
+    runtime: image
+    image:
+      url: docker.io/clamav/clamav:1.5.5-debian13-slim
+    region: ohio
+    plan: 2c-4g
+    autoDeployTrigger: off
+
+  # Vercel reaches this service over HTTPS; this gateway talks to clamd privately.
+  - type: web
+    name: clientflow-scanner-gateway
+    runtime: docker
+    region: ohio
+    plan: 0.5c-512mb
+    dockerfilePath: ./scanner/Dockerfile
+    dockerContext: ./scanner
+    healthCheckPath: /healthz
+    autoDeployTrigger: off
+    envVars:
+      - key: SCANNER_API_KEY
+        sync: false
+      - key: CLAMAV_HOST
+        fromService:
+          type: pserv
+          name: clientflow-clamav
+          property: host
+      - key: CLAMAV_PORT
+        value: "3310"
+      - key: CLAMAV_TIMEOUT_SECONDS
+        value: "20"
+      - key: MAX_SCAN_BYTES
+        value: "4194304"
