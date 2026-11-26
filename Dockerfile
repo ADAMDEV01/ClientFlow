@@ -13,7 +13,6 @@ COPY . .
 
 ENV NODE_ENV=development
 ENV DATABASE_URL=postgresql://clientflow:clientflow_dev_password@postgres:5432/clientflow?schema=public
-ENV AUTH_SECRET=ClientFlowLocalDockerSecret-Change-Me-123456
 ENV AUTH_URL=http://localhost:3000
 ENV NEXT_PUBLIC_APP_URL=http://localhost:3000
 ENV CLIENTFLOW_LOCAL_STORAGE_DIR=/app/.clientflow-storage
