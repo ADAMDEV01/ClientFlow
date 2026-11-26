@@ -86,12 +86,12 @@ async def _scan_with_clamd(payload: bytes, *, timeout: float) -> tuple[bool, str
             asyncio.open_connection(host, port),
             timeout=timeout,
         )
-        writer.write(b"zINSTREAM\\0")
+        writer.write(b"zINSTREAM\0")
         for offset in range(0, len(payload), 64 * 1024):
             chunk = payload[offset : offset + 64 * 1024]
             writer.write(len(chunk).to_bytes(4, "big"))
             writer.write(chunk)
-        writer.write(b"\\0\\0\\0\\0")
+        writer.write(b"\0\0\0\0")
         await asyncio.wait_for(writer.drain(), timeout=timeout)
         response = await asyncio.wait_for(
             reader.readuntil(b"\0"),
@@ -140,7 +140,7 @@ app = FastAPI(
 async def healthz() -> dict[str, str]:
     try:
         _, _, timeout, _ = _scanner_config()
-        response = await _clamd_command(b"zPING\\0", timeout=min(timeout, 3))
+        response = await _clamd_command(b"zPING\0", timeout=min(timeout, 3))
     except ScannerUnavailable as error:
         raise HTTPException(status_code=503, detail="Scanner unavailable.") from error
     if response != b"PONG":
