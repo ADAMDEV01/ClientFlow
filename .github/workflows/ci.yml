@@ -45,6 +45,8 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      - name: Emit Prettier-normalized scanner test source
+        run: npx prettier src/tests/unit/malware-scanner.test.ts
       - name: Report npm dependency advisories
         run: |
           npm audit --json > /tmp/npm-audit.json || true
