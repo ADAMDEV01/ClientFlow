@@ -5,6 +5,11 @@ import { attachFileToDeliverable, createDeliverable } from "@/server/services/de
 import { getStorageProvider } from "@/server/storage";
 import { consumeRateLimit } from "@/server/services/rate-limit";
 import { inspectOfficeArchive } from "@/server/storage/office-archive";
+import {
+  MalwareDetectedError,
+  MalwareScannerUnavailableError,
+  scanUploadedFile,
+} from "@/server/storage/malware-scanner";
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024;
 const ALLOWED_TYPES = new Set([
@@ -142,6 +147,26 @@ export async function POST(
         );
       }
     }
+    // Files are never written to object storage or attached to a deliverable
+    // until the configured malware scanner returns a clean verdict.
+    try {
+      await scanUploadedFile(bytes);
+    } catch (scanError) {
+      if (scanError instanceof MalwareDetectedError) {
+        return NextResponse.json(
+          { error: "The uploaded file failed the malware scan and was rejected." },
+          { status: 422 },
+        );
+      }
+      if (scanError instanceof MalwareScannerUnavailableError) {
+        return NextResponse.json(
+          { error: "File scanning is temporarily unavailable. The file was not stored." },
+          { status: 503 },
+        );
+      }
+      throw scanError;
+    }
+
     const storage = getStorageProvider();
 
     await storage.put({ key, contentType: file.type, bytes });
