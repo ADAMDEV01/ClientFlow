@@ -8,7 +8,7 @@ services:
       url: docker.io/clamav/clamav:1.5.5-debian13-slim
     region: ohio
     plan: 2c-4g
-    autoDeployTrigger: off
+    autoDeployTrigger: "off"
 
   # Vercel reaches this service over HTTPS; this gateway talks to clamd privately.
   - type: web
@@ -19,7 +19,7 @@ services:
     dockerfilePath: ./scanner/Dockerfile
     dockerContext: ./scanner
     healthCheckPath: /healthz
-    autoDeployTrigger: off
+    autoDeployTrigger: "off"
     envVars:
       - key: SCANNER_API_KEY
         sync: false
