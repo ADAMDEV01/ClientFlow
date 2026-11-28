@@ -79,7 +79,7 @@ export default async function AppHomePage() {
         </div>
         <div className="mt-4 divide-y divide-slate-200 rounded-2xl border border-slate-300 bg-white shadow-[0_8px_28px_rgba(15,23,42,0.045)] dark:divide-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:shadow-none">
           {workspace.projects.length ? workspace.projects.map((project) => (
-            <Link key={project.id} href={\`/app/projects/\${project.id}\`} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 transition hover:bg-slate-50 dark:hover:bg-slate-900">
+            <Link key={project.id} href={`/app/projects/${project.id}`} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 transition hover:bg-slate-50 dark:hover:bg-slate-900">
               <div>
                 <p className="font-medium text-slate-900 dark:text-white">{project.name}</p>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{project.client.name}</p>

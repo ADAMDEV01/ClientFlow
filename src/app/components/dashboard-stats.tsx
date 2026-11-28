@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getWorkspaceDashboardStats } from "@/server/queries/analytics";
 
 const statusLabels = {
