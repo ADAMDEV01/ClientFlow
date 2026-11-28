@@ -24,7 +24,7 @@ function WorkspacePreview() {
         </div>
         <div className="grid gap-3 pt-3 sm:grid-cols-[120px_1fr]">
           <aside className="hidden rounded-xl bg-slate-50 p-3 dark:bg-slate-900 sm:block">
-            <p className="px-2 pb-3 text-[9px] font-bold uppercase tracking-[.12em] text-slate-400">Workspace</p>
+            <p className="px-2 pb-3 text-[9px] font-bold uppercase tracking-[.12em] text-slate-600 dark:text-slate-300">Workspace</p>
             <div className="space-y-1 text-[10px]">
               <p className="rounded-lg bg-indigo-100 px-2.5 py-2 font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">Overview</p>
               <p className="px-2.5 py-2 text-slate-500 dark:text-slate-400">Projects</p>
@@ -67,13 +67,13 @@ function WorkspacePreview() {
                         <span className="text-[8px] text-slate-500">{value}</span>
                       </div>
                       <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className={`h-full rounded-full bg-indigo-500 ${width}`} /></div>
-                      <p className="mt-1 text-[8px] text-slate-400">{phase}</p>
+                      <p className="mt-1 text-[8px] text-slate-600 dark:text-slate-300">{phase}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-            <p className="px-1 text-center text-[9px] text-slate-400">Sample interface · illustrative content only</p>
+            <p className="px-1 text-center text-[9px] text-slate-600 dark:text-slate-300">Sample interface · illustrative content only</p>
           </div>
         </div>
       </div>
