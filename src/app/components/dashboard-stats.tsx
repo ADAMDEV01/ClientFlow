@@ -63,7 +63,7 @@ export async function DashboardStats({
   ];
   const completedSteps = steps.filter((step) => step.complete).length;
   const cards = [
-    { label: "Active projects", value: stats.activeProjects, icon: "projects" as const, tone: "indigo" },
+    { label: "Active projects", value: stats.activeProjects, detail: `Projects marked Active · ${projectCount} total`, icon: "projects" as const, tone: "indigo" },
     { label: "Overdue tasks", value: stats.overdueTasks, icon: "overdue" as const, tone: stats.overdueTasks > 0 ? "danger" : "slate" },
     { label: "Pending reviews", value: stats.pendingReviews, icon: "reviews" as const, tone: "amber" },
     { label: "Deliverable approval rate", value: stats.approvalRate === null ? "—" : `${stats.approvalRate}%`, icon: "approval" as const, tone: "emerald" },
@@ -127,6 +127,7 @@ export async function DashboardStats({
               </span>
             </div>
             <p className="mt-4 text-3xl font-semibold tabular-nums tracking-tight text-slate-950 dark:text-white">{card.value}</p>
+            {card.detail ? <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-400">{card.detail}</p> : null}
           </article>
         ))}
       </div>
