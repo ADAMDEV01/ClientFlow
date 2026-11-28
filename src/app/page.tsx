@@ -41,7 +41,7 @@ function WorkspacePreview() {
               <span className="rounded-lg bg-indigo-600 px-2.5 py-1.5 text-[9px] font-semibold text-white">New project</span>
             </div>
             <div className="grid grid-cols-3 gap-2">
-              {[["03", "Projects"], ["05", "Open tasks"], ["02", "Reviews"]].map(([value, label]) => (
+              {[["3", "Projects"], ["5", "Open tasks"], ["2", "Reviews"]].map(([value, label]) => (
                 <div key={label} className="rounded-xl border border-slate-100 bg-white p-2.5 dark:border-slate-800 dark:bg-slate-950">
                   <p className="text-base font-bold tabular-nums text-slate-900 dark:text-white sm:text-lg">{value}</p>
                   <p className="mt-1 text-[9px] text-slate-500 dark:text-slate-400">{label}</p>
