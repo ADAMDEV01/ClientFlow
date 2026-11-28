@@ -1,9 +1,15 @@
 import axe from "axe-core";
 import { expect, test } from "@playwright/test";
 
-test("home page renders the ClientFlow introduction", async ({ page }) => {
+test("home page renders one clear primary CTA and a product preview", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Client work, without the chaos." })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Illustrative workspace preview" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Get started" })).toHaveCount(2);
+  await expect(page.getByRole("link", { name: "I already have an account" })).toHaveCount(0);
+  await expect(page.getByRole("navigation").getByRole("link", { name: "Sign in" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "From first conversation to approved delivery" })).toBeVisible();
+  await expect(page.getByText("Illustrative preview", { exact: true })).toBeVisible();
   await expect(page.getByText("ClientFlow", { exact: true })).toBeVisible();
 });
 
@@ -23,11 +29,16 @@ test("home page passes axe-core WCAG 2.1 A/AA checks", async ({ page }) => {
   );
 
   const violations = await page.evaluate(async () => {
+    type AxeNode = {
+      target: string[];
+      html: string;
+      failureSummary: string | null;
+    };
     type AxeResult = {
       violations: Array<{
         id: string;
         impact: string | null;
-        nodes: unknown[];
+        nodes: AxeNode[];
       }>;
     };
     type AxeGlobal = {
@@ -48,7 +59,11 @@ test("home page passes axe-core WCAG 2.1 A/AA checks", async ({ page }) => {
     return result.violations.map(({ id, impact, nodes }) => ({
       id,
       impact,
-      affectedNodes: nodes.length,
+      affectedNodes: nodes.map((node) => ({
+        target: node.target,
+        html: node.html.slice(0, 240),
+        failureSummary: node.failureSummary,
+      })),
     }));
   });
 
