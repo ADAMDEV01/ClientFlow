@@ -66,7 +66,7 @@ function WorkspacePreview() {
                         <p className="truncate text-[9px] font-semibold text-slate-800 dark:text-slate-200">{name}</p>
                         <span className="text-[8px] text-slate-500">{value}</span>
                       </div>
-                      <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className={\`h-full rounded-full bg-indigo-500 \${width}\`} /></div>
+                      <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className={`h-full rounded-full bg-indigo-500 ${width}`} /></div>
                       <p className="mt-1 text-[8px] text-slate-400">{phase}</p>
                     </div>
                   </div>

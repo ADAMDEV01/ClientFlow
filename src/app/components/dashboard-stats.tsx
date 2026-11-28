@@ -56,7 +56,7 @@ export async function DashboardStats({
       title: "Add your first task",
       description: "Open a project and assign the next piece of work.",
       complete: taskCount > 0,
-      href: firstProjectId ? \`/app/projects/\${firstProjectId}\` : "/app/projects",
+      href: firstProjectId ? `/app/projects/${firstProjectId}` : "/app/projects",
       action: taskCount > 0 ? "View tasks" : firstProjectId ? "Add a task" : "Create a project first",
     },
   ];
@@ -65,7 +65,7 @@ export async function DashboardStats({
     { label: "Active projects", value: stats.activeProjects, icon: "projects" as const, tone: "indigo" },
     { label: "Overdue tasks", value: stats.overdueTasks, icon: "overdue" as const, tone: stats.overdueTasks > 0 ? "danger" : "slate" },
     { label: "Pending reviews", value: stats.pendingReviews, icon: "reviews" as const, tone: "amber" },
-    { label: "Deliverable approval rate", value: stats.approvalRate === null ? "—" : \`\${stats.approvalRate}%\`, icon: "approval" as const, tone: "emerald" },
+    { label: "Deliverable approval rate", value: stats.approvalRate === null ? "—" : `${stats.approvalRate}%`, icon: "approval" as const, tone: "emerald" },
   ];
 
   return (
@@ -138,7 +138,7 @@ export async function DashboardStats({
         <div className="mt-5 grid gap-x-6 sm:grid-cols-2 xl:grid-cols-4">
           {Object.entries(stats.tasksByStatus).map(([status, count]) => (
             <div key={status} className="flex items-center gap-3 border-t border-slate-100 py-4 dark:border-slate-800">
-              <span className={\`h-2.5 w-2.5 shrink-0 rounded-full \${statusColors[status as keyof typeof statusColors] ?? "bg-slate-400"}\`} />
+              <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${statusColors[status as keyof typeof statusColors] ?? "bg-slate-400"}`} />
               <p className="min-w-0 flex-1 text-sm font-medium text-slate-700 dark:text-slate-300">{statusLabels[status as keyof typeof statusLabels]}</p>
               <p className="text-lg font-semibold tabular-nums text-slate-950 dark:text-white">{count}</p>
             </div>

@@ -18,9 +18,10 @@ export function TeamNavigation() {
   return (
     <div aria-label="Team navigation" className="flex flex-wrap items-center gap-1">
       {links.map((link) => {
-        const active = link.href === "/app"
-          ? pathname === "/app"
-          : pathname === link.href || pathname.startsWith(link.href + "/");
+        const active =
+          link.href === "/app"
+            ? pathname === "/app"
+            : pathname === link.href || pathname.startsWith(link.href + "/");
 
         return (
           <Link
